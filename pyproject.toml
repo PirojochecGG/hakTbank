@@ -5,7 +5,6 @@ description = "API для TBank Mobile Assistent"
 authors = [{name = "Dmitriy"}]
 requires-python = ">=3.12"
 dependencies = [
-    "jwt",
     "bcrypt",
     "pytz",
     "redis",
