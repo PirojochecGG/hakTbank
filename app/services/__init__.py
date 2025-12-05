@@ -5,6 +5,8 @@ from typing import Dict, Any
 
 from app.services.srv_auth  import AuthService
 from app.services.srv_auth.manager  import AuthManager
+from app.services.srv_chat import ChatService
+from app.services.srv_chat import ChatManager
 
 
 class ServiceContainer:
@@ -26,6 +28,7 @@ class ServiceContainer:
 
         logger.info("Инициализация сервисов...")
         self.register("auth", AuthService(AuthManager()))
+        self.register("chat", ChatService(ChatManager()))
 
         self._initialized = True
         logger.info("✅ Сервисы инициализированы")
@@ -46,5 +49,10 @@ class Services:
     @property
     def auth(self) -> "AuthService":
         return container.get("auth")
+
+    @property
+    def chat(self) -> "ChatService":
+        return container.get("chat")
+
 
 get_service = Services()
