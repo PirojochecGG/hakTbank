@@ -25,7 +25,7 @@ class User(Base):
     nickname:         Mapped[str]           = mapped_column(String(100), unique=True, index=True, nullable=False)
     password_hash:    Mapped[str]           = mapped_column(String(255), nullable=False)
     monthly_savings:  Mapped[int]           = mapped_column(Integer, default=0, doc="Сумма откладываемая в месяц (рубли)")
-    monthly_salary:   Mapped[Optional[int]] = mapped_column(Integer, doc="Месячная зарплата (рубли)")
+    monthly_salary:   Mapped[int]           = mapped_column(Integer, default=0, doc="Месячная зарплата (рубли)")
     current_savings:  Mapped[int]           = mapped_column(Integer, default=0, doc="Текущие накопления (рубли)")
     blacklist:        Mapped[list[str]]     = mapped_column(JSON, default=list, doc="Запрещенные категории")
     cooling_ranges:   Mapped[dict]          = mapped_column(JSON, default=dict, doc="Диапазоны охлаждения {price: days}")
