@@ -99,20 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [token]);
 
-  const loadCurrentUser = useCallback(async () => {
-    if (!token) return null;
-    try {
-      const data = await apiFetch<AuthUser>("/auth/me", {
-        method: "GET",
-      });
-      setUser(data);
-      return data;
-    } catch (error) {
-      console.error("Не удалось получить данные пользователя", error);
-      return null;
-    }
-  }, [token]);
-
   useEffect(() => {
     let isMounted = true;
 
@@ -124,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setAccessToken(token);
-      await Promise.all([loadCurrentUser(), refreshProfile()]);
+      await refreshProfile();
       if (isMounted) setIsInitializing(false);
     };
 
@@ -133,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       isMounted = false;
     };
-  }, [loadCurrentUser, refreshProfile, token]);
+  }, [refreshProfile, token]);
 
   const login = useCallback(
     async (payload: { email: string; password: string }) => {
