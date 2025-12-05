@@ -5,6 +5,9 @@ import { theme } from "./theme";
 import { Layout } from "./components/Layout";
 import { ProfilePage } from "./pages/ProfilePage";
 import { ChatPage } from "./pages/ChatPage";
+import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
+import { RequireAuth } from "./components/RequireAuth";
 
 function App() {
   return (
@@ -13,8 +16,24 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<Navigate to="/profile" replace />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/profile"
+            element={
+              <RequireAuth>
+                <ProfilePage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <RequireAuth>
+                <ChatPage />
+              </RequireAuth>
+            }
+          />
           <Route path="*" element={<Navigate to="/profile" replace />} />
         </Routes>
       </Layout>

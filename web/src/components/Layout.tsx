@@ -1,17 +1,22 @@
 import { type ReactNode } from "react";
 import {
+  Avatar,
   Box,
   Drawer,
   List,
+  Button,
+  Divider,
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Stack,
   Typography,
-  Divider,
 } from "@mui/material";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import { NavLink } from "react-router-dom";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const drawerWidth = 260;
 
@@ -20,6 +25,16 @@ type LayoutProps = {
 };
 
 export function Layout({ children }: LayoutProps) {
+  const navigate = useNavigate();
+  const { token, user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
+  const userInitial = user?.nickname?.[0] || user?.email?.[0] || "?";
+
   return (
     <Box
       sx={{
@@ -78,11 +93,13 @@ export function Layout({ children }: LayoutProps) {
 
           <List>
             <ListItemButton
-              component={NavLink as any}
+              component={NavLink}
               to="/profile"
               sx={{
                 borderRadius: 2,
                 mb: 1,
+                opacity: token ? 1 : 0.6,
+                pointerEvents: token ? "auto" : "none",
                 "&.active": {
                   bgcolor: "primary.main",
                   color: "#000000",
@@ -99,10 +116,12 @@ export function Layout({ children }: LayoutProps) {
             </ListItemButton>
 
             <ListItemButton
-              component={NavLink as any}
+              component={NavLink}
               to="/chat"
               sx={{
                 borderRadius: 2,
+                opacity: token ? 1 : 0.6,
+                pointerEvents: token ? "auto" : "none",
                 "&.active": {
                   bgcolor: "primary.main",
                   color: "#000000",
@@ -121,7 +140,48 @@ export function Layout({ children }: LayoutProps) {
         </Box>
 
         <Box>
-          <Divider sx={{ mb: 1 }} />
+          <Divider sx={{ mb: 2 }} />
+          {token ? (
+            <Stack spacing={1.5}>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Avatar sx={{ bgcolor: "primary.main", color: "black" }}>
+                  {userInitial}
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle2">
+                    {user?.nickname || "Пользователь"}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {user?.email}
+                  </Typography>
+                </Box>
+              </Stack>
+
+              <Button
+                variant="outlined"
+                color="inherit"
+                onClick={handleLogout}
+                startIcon={<LogoutIcon />}
+              >
+                Выйти
+              </Button>
+            </Stack>
+          ) : (
+            <Stack spacing={1}>
+              <Button component={NavLink} to="/login" variant="contained">
+                Войти
+              </Button>
+              <Button
+                component={NavLink}
+                to="/register"
+                variant="outlined"
+                color="inherit"
+              >
+                Регистрация
+              </Button>
+            </Stack>
+          )}
+          <Divider sx={{ mt: 2, mb: 1 }} />{" "}
           <Typography variant="caption" color="text.secondary">
             Сделано для хакатона T-Bank.
           </Typography>

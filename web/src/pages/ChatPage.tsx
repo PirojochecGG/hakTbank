@@ -7,7 +7,7 @@ import {
   Button,
   Stack,
 } from "@mui/material";
-import { apiFetch, getAuthHeaders } from "../api";
+import { apiFetch } from "../api";
 
 type ChatMessage = {
   id: number;
@@ -43,11 +43,8 @@ export function ChatPage() {
     setIsSending(true);
 
     try {
-      const data = await apiFetch<{ reply: string }>("/api/chat", {
+      const data = await apiFetch<{ reply: string }>("/chat", {
         method: "POST",
-        headers: {
-          ...getAuthHeaders(),
-        },
         body: JSON.stringify({ message: trimmed }),
       });
 

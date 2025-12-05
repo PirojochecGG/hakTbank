@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Typography,
@@ -16,7 +16,8 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { apiFetch, getAuthHeaders } from "../api";
+import { apiFetch } from "../api";
+import { useAuth, type ProfileRule } from "../context/AuthContext";
 
 type CooldownRule = {
   id: number;
@@ -26,6 +27,7 @@ type CooldownRule = {
 };
 
 export function ProfilePage() {
+  const { profile, refreshProfile } = useAuth();
   const [nickname, setNickname] = useState("");
   const [age, setAge] = useState("");
   const [monthlyIncome, setMonthlyIncome] = useState("");
@@ -51,6 +53,53 @@ export function ProfilePage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  const defaultRules: CooldownRule[] = useMemo(
+    () => [
+      { id: 1, minAmount: 0, maxAmount: 5000, days: 1 },
+      { id: 2, minAmount: 5000, maxAmount: 20000, days: 3 },
+      { id: 3, minAmount: 20000, maxAmount: null, days: 7 },
+    ],
+    []
+  );
+
+  useEffect(() => {
+    if (!profile) {
+      void refreshProfile();
+    }
+  }, [profile, refreshProfile]);
+
+  useEffect(() => {
+    if (!profile) return;
+
+    setNickname(profile.nickname ?? "");
+    setAge(profile.age != null ? String(profile.age) : "");
+    setMonthlyIncome(
+      profile.monthlyIncome != null ? String(profile.monthlyIncome) : ""
+    );
+    setMonthlyFreeBudget(
+      profile.monthlyFreeBudget != null ? String(profile.monthlyFreeBudget) : ""
+    );
+    setCurrentSavings(
+      profile.currentSavings != null ? String(profile.currentSavings) : ""
+    );
+    setUseSavings(profile.useSavings);
+    setNotificationChannel(profile.notificationChannel);
+    setNotificationFrequency(profile.notificationFrequency);
+
+    const mappedRules: CooldownRule[] =
+      profile.cooldownRules.length > 0
+        ? profile.cooldownRules.map((rule: ProfileRule, idx) => ({
+            id: idx + 1,
+            minAmount: rule.min_amount,
+            maxAmount: rule.max_amount,
+            days: rule.days,
+          }))
+        : defaultRules;
+
+    setCooldownRules(mappedRules);
+    setBlacklist(profile.blacklist);
+  }, [defaultRules, profile]);
 
   const parseNumber = (value: string) => {
     const trimmed = value.trim();
@@ -143,15 +192,13 @@ export function ProfilePage() {
 
     setIsSaving(true);
     try {
-      await apiFetch("/api/profile", {
+      await apiFetch("/profile", {
         method: "POST",
-        headers: {
-          ...getAuthHeaders(),
-        },
         body: JSON.stringify(payload),
       });
 
       setSaveMessage("Профиль сохранён.");
+      void refreshProfile();
     } catch (error) {
       const errorMessage =
         error instanceof Error

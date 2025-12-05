@@ -1,15 +1,32 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
+const ACCESS_TOKEN_KEY = "access_token";
 
 const isBrowser = typeof window !== "undefined";
 
-export const getAccessToken = () =>
-  isBrowser ? localStorage.getItem(ACCESS_TOKEN_KEY) : null;
+let inMemoryAccessToken: string | null = null;
 
-export const getAuthHeaders = () => {
+export const getAccessToken = () => {
+  if (inMemoryAccessToken) return inMemoryAccessToken;
+  if (!isBrowser) return null;
+  const stored = localStorage.getItem(ACCESS_TOKEN_KEY);
+  inMemoryAccessToken = stored;
+  return stored;
+};
+
+export const setAccessToken = (token: string | null) => {
+  inMemoryAccessToken = token;
+  if (!isBrowser) return;
+  if (token) {
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+  }
+};
+
+export const getAuthHeaders = (): Record<string, string> | undefined => {
   const token = getAccessToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  return token ? { Authorization: `Bearer ${token}` } : undefined;
 };
 
 export type ApiErrorResponse = {
@@ -25,6 +42,7 @@ export async function apiFetch<T>(
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
       ...init.headers,
     },
   });
