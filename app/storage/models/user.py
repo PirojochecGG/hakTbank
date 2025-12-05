@@ -1,9 +1,12 @@
 # fmt: off
 # isort: off
 from typing import TYPE_CHECKING, Optional
-from sqlalchemy import String, Integer, JSON
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timedelta, timezone
+from sqlalchemy import String, Integer, JSON, select
+from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 
+from ..enums import AIModel
 from .base import Base
 
 if TYPE_CHECKING:
@@ -46,3 +49,57 @@ class User(Base):
     purchases: Mapped[list["Purchase"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+
+    async def get_available_models(self, session: AsyncSession) -> list[dict]:
+        """Возвращает доступные модели для пользователя."""
+        return AIModel.get_available_models(await self.is_premium(session))
+
+
+    async def has_model_access(self, session: AsyncSession, model_id: str) -> bool:
+        """Проверяет доступ к модели."""
+        return AIModel.has_access(model_id, await self.is_premium(session))
+
+
+    @classmethod
+    async def create_new(cls, session: AsyncSession, **kwargs) -> "User":
+        """Создает пользователя с бесплатной подпиской."""
+        from .tariff import Tariff
+        from .subscription import Subscription
+
+        session.add(user := cls(**kwargs))
+        await session.flush()
+
+        if not (tariff := await Tariff.get_default(session)):
+            raise ValueError("Бесплатный тариф не найден")
+
+        session.add(Subscription(
+            user_id=user.id, tariff_id=tariff.id, req_max=tariff.quota,
+            expire_date=datetime.now(timezone.utc) + timedelta(days=tariff.expire_days)
+        ))
+        return user
+
+
+    async def is_premium(self, session: AsyncSession) -> bool:
+        """Проверяет, есть ли у пользователя активная платная подписка."""
+        from .subscription import Subscription
+
+        if not (user_with_subs := await session.scalar(
+            select(User)
+            .options(
+                selectinload(User.subscriptions)
+                .selectinload(Subscription.tariff)
+            )
+            .where(User.id == self.id)
+        )): return False
+
+        if not user_with_subs.subscriptions:
+            return False
+
+        current_sub = max(
+            user_with_subs.subscriptions,
+            key=lambda s: s.created_at
+        )
+        return (
+            current_sub.active and
+            current_sub.tariff.sys_name != "FREE"
+        )

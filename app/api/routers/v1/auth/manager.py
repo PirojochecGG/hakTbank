@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services import get_service
-from app.storage.models import User, Subscription, Tariff
+from app.storage.models import User
 from .schemas import *
 
 
@@ -37,12 +37,12 @@ class AuthRouterManager:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Пользователь с таким nickname уже существует")
 
         password_hash = get_service.auth.hash_password(request.password)
-        db.add(user := User(email=request.email, nickname=request.nickname, password_hash=password_hash))
-        await db.flush()
-
-        # Создаем дефолтную подписку
-        if tariff := await Tariff.get_default(db):
-            db.add(Subscription(user_id=user.id, tariff_id=tariff.id, req_max=tariff.quota))
+        user = await User.create_new(
+            db,
+            email=request.email,
+            nickname=request.nickname,
+            password_hash=password_hash
+        )
 
         access_token = get_service.auth.create_access_token(user.id)
         await db.commit()
