@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import { apiFetch, getAuthHeaders } from "../api";
 
 type CooldownRule = {
   id: number;
@@ -142,23 +143,24 @@ export function ProfilePage() {
 
     setIsSaving(true);
     try {
-      // URL потом подставит бэкендер
-      const resp = await fetch("http://localhost:8000/api/profile", {
+      await apiFetch("/api/profile", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(payload),
       });
 
-      if (!resp.ok) {
-        throw new Error("Bad response");
-      }
-
       setSaveMessage("Профиль сохранён.");
-    } catch {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Не удалось сохранить профиль.";
+      const errorCode = (error as { code?: string }).code;
+
       setSaveMessage(
-        "Не удалось сохранить профиль. Проверь соединение с бэкендом."
+        errorCode ? `${errorMessage} (код ошибки: ${errorCode})` : errorMessage
       );
     } finally {
       setIsSaving(false);

@@ -1,7 +1,16 @@
-const DEFAULT_API_BASE_URL = "http://localhost:8000";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE_URL;
+export const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
+
+const isBrowser = typeof window !== "undefined";
+
+export const getAccessToken = () =>
+  isBrowser ? localStorage.getItem(ACCESS_TOKEN_KEY) : null;
+
+export const getAuthHeaders = () => {
+  const token = getAccessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 export type ApiErrorResponse = {
   code?: string;
@@ -32,6 +41,7 @@ export async function apiFetch<T>(
     );
     (error as Error & { code?: string }).code =
       errorBody?.code || `HTTP_${response.status}`;
+    (error as Error & { status?: number }).status = response.status;
     throw error;
   }
 

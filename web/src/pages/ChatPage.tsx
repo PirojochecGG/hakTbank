@@ -7,6 +7,7 @@ import {
   Button,
   Stack,
 } from "@mui/material";
+import { apiFetch, getAuthHeaders } from "../api";
 
 type ChatMessage = {
   id: number;
@@ -42,20 +43,13 @@ export function ChatPage() {
     setIsSending(true);
 
     try {
-      // URL и формат ответа настроит бэкендер
-      const resp = await fetch("http://localhost:8000/api/chat", {
+      const data = await apiFetch<{ reply: string }>("/api/chat", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ message: trimmed }),
       });
-
-      if (!resp.ok) {
-        throw new Error("Bad response");
-      }
-
-      const data = (await resp.json()) as { reply: string };
 
       const assistantMessage: ChatMessage = {
         id: Date.now() + 1,
@@ -64,11 +58,21 @@ export function ChatPage() {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Не удалось связаться с сервером.";
+      const errorCode = (error as { code?: string }).code;
+
+      const feedbackMessage = errorCode
+        ? `${errorMessage} (код ошибки: ${errorCode})`
+        : errorMessage;
+
       const fallback: ChatMessage = {
         id: Date.now() + 2,
         role: "assistant",
-        text: "Не удалось связаться с сервером. Спроси у тиммейта по бэкенду, жив ли API.",
+        text: `${feedbackMessage}. Спроси у тиммейта по бэкенду, жив ли API.`,
       };
       setMessages((prev) => [...prev, fallback]);
     } finally {
