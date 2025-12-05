@@ -1,90 +1,42 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme } from "@mui/material/styles";
 
-const tBankTheme = createTheme({
+export const theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: "dark",
     primary: {
-      main: '#FFD600', // Жёлтый Т-Банка
-      light: '#FFE44D',
-      dark: '#FFB300',
-      contrastText: '#000000',
-    },
-    secondary: {
-      main: '#FFFFFF', // Белый
-      contrastText: '#000000',
+      main: "#FFDD2D",
     },
     background: {
-      default: '#000000', // Чёрный фон
-      paper: '#1A1A1A',   // Тёмно-серый для карточек
+      default: "#000000",
+      paper: "#111111",
     },
     text: {
-      primary: '#FFFFFF', // Белый текст
-      secondary: '#B0B0B0', // Светло-серый
+      primary: "#ffffff",
+      secondary: "#9ca3af",
     },
-    divider: '#333333',
+  },
+  shape: {
+    borderRadius: 12,
   },
   typography: {
-    fontFamily: '"Roboto", "Arial", sans-serif',
-    h1: {
-      fontWeight: 700,
-      fontSize: '2.5rem',
-    },
-    h2: {
-      fontWeight: 600,
-      fontSize: '2rem',
-    },
-    h3: {
-      fontWeight: 600,
-      fontSize: '1.75rem',
-    },
-    h4: {
-      fontWeight: 600,
-      fontSize: '1.5rem',
-    },
-    h5: {
-      fontWeight: 500,
-      fontSize: '1.25rem',
-    },
-    h6: {
-      fontWeight: 500,
-      fontSize: '1rem',
-    },
+    fontFamily:
+      'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: '8px',
-          textTransform: 'none',
-          fontWeight: 600,
-          padding: '10px 24px',
-        },
-        containedPrimary: {
-          backgroundColor: '#FFD600',
-          color: '#000000',
-          '&:hover': {
-            backgroundColor: '#FFE44D',
-          },
+          textTransform: "none",
+          borderRadius: 999,
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundImage: 'none',
-          backgroundColor: '#1A1A1A',
-        },
-      },
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          backgroundColor: '#000000',
-          borderBottom: '1px solid #333333',
+          backgroundImage: "none",
         },
       },
     },
   },
 });
-
-export default tBankTheme;
