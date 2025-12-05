@@ -17,10 +17,10 @@ html {
   color-scheme: dark;
 }
 
-/* Firefox: тонкий жёлтый скролл на тёмном фоне */
+/* Firefox: скролл цвета меню на тёмном фоне */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #ffdd2d #050505;
+  scrollbar-color: #111111 #050505;
 }
 
 /* WebKit-браузеры (Chrome, Edge, Safari) */
@@ -35,11 +35,11 @@ html {
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #ffdd2d;
+  background-color: #111111;
   border-radius: 999px;
   border: 2px solid #050505;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: #ffe44d;
+  background-color: #1a1a1a;
 }
