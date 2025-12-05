@@ -11,7 +11,6 @@ import {
   Divider,
 } from '@mui/material';
 import { Visibility, VisibilityOff, Email, Person, Lock } from '@mui/icons-material';
-import { authService, type RegisterData } from '../../services/authService';
 import TButton from '../Common/TButton';
 
 interface RegisterFormProps {
@@ -79,8 +78,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin 
       }, 1500);
     } catch (err: any) {
       setError(
-        err.response?.data?.detail || 
-        err.response?.data?.message || 
+        err.response?.data?.detail ||
+        err.response?.data?.message ||
         'Ошибка регистрации. Попробуйте снова.'
       );
     } finally {
@@ -95,8 +94,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin 
   };
 
   return (
-    <Paper sx={{ 
-      p: 4, 
+    <Paper sx={{
+      p: 4,
       backgroundColor: '#1A1A1A',
       maxWidth: 400,
       width: '100%',

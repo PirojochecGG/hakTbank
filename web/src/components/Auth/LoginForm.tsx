@@ -13,7 +13,6 @@ import {
   FormControlLabel,
 } from '@mui/material';
 import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
-import { authService, type LoginData } from '../../services/authService';
 import TButton from '../Common/TButton';
 
 interface LoginFormProps {
@@ -45,16 +44,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegister }) 
     try {
       const response = await authService.login(formData);
       authService.setAuthData(response.access_token, response.user);
-      
+
       if (rememberMe) {
         // Сохраняем в localStorage (уже сделано в setAuthData)
       }
-      
+
       onSuccess();
     } catch (err: any) {
       setError(
-        err.response?.data?.detail || 
-        err.response?.data?.message || 
+        err.response?.data?.detail ||
+        err.response?.data?.message ||
         'Неверный email или пароль'
       );
     } finally {
@@ -69,8 +68,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegister }) 
   };
 
   return (
-    <Paper sx={{ 
-      p: 4, 
+    <Paper sx={{
+      p: 4,
       backgroundColor: '#1A1A1A',
       maxWidth: 400,
       width: '100%',
@@ -157,7 +156,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegister }) 
             label="Запомнить меня"
             sx={{ color: '#FFFFFF' }}
           />
-          
+
           <Button
             type="button"
             sx={{
