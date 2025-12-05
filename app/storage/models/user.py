@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from .requests import Request
     from .chat import Chat
     from .purchase import Purchase
-    from .session import Session
 
 
 class User(Base):
