@@ -104,6 +104,13 @@ export function ProfilePage() {
     return Number.isNaN(num) ? null : num;
   };
 
+  // Фильтруем ввод: только целые неотрицательные числа (без точки, +, -)
+  const filterNumberInput = (value: string): string => {
+    if (value === "") return "";
+    // Оставляем только цифры
+    return value.replace(/[^\d]/g, "");
+  };
+
   const handleAddRule = () => {
     setCoolingRanges((prev) => [
       ...prev,
@@ -250,45 +257,39 @@ export function ProfilePage() {
               <TextField
                 fullWidth
                 label="Доход в месяц, ₽"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={monthlyIncome}
                 onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "" || Number(val) >= 0) {
-                    setMonthlyIncome(val);
-                  }
+                  const filtered = filterNumberInput(e.target.value);
+                  setMonthlyIncome(filtered);
                 }}
-                inputProps={{ min: "0" }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Сбережения в месяц, ₽"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={monthlySavings}
                 onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "" || Number(val) >= 0) {
-                    setMonthlySavings(val);
-                  }
+                  const filtered = filterNumberInput(e.target.value);
+                  setMonthlySavings(filtered);
                 }}
-                inputProps={{ min: "0" }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Текущие накопления, ₽"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={currentSavings}
                 onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "" || Number(val) >= 0) {
-                    setCurrentSavings(val);
-                  }
+                  const filtered = filterNumberInput(e.target.value);
+                  setCurrentSavings(filtered);
                 }}
-                inputProps={{ min: "0" }}
               />
             </Grid>
           </Grid>
@@ -341,47 +342,41 @@ export function ProfilePage() {
                 <Grid size={{ xs: 12, md: 3 }}>
                   <TextField
                     fullWidth
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     size="small"
                     value={rule.minAmount}
                     onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "" || Number(val) >= 0) {
-                        handleRuleChange(rule.id, "minAmount", val);
-                      }
+                      const filtered = filterNumberInput(e.target.value);
+                      handleRuleChange(rule.id, "minAmount", filtered);
                     }}
-                    inputProps={{ min: "0" }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
                   <TextField
                     fullWidth
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     size="small"
                     placeholder="∞"
                     value={rule.maxAmount ?? ""}
                     onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "" || Number(val) >= 0) {
-                        handleRuleChange(rule.id, "maxAmount", val);
-                      }
+                      const filtered = filterNumberInput(e.target.value);
+                      handleRuleChange(rule.id, "maxAmount", filtered);
                     }}
-                    inputProps={{ min: "0" }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
                   <TextField
                     fullWidth
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     size="small"
                     value={rule.days}
                     onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "" || Number(val) >= 0) {
-                        handleRuleChange(rule.id, "days", val);
-                      }
+                      const filtered = filterNumberInput(e.target.value);
+                      handleRuleChange(rule.id, "days", filtered);
                     }}
-                    inputProps={{ min: "0" }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
