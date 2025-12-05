@@ -22,7 +22,11 @@ import {
 } from "@mui/material";
 
 import { apiFetch } from "../api";
-import { getStoredChatId, setStoredChatId } from "../utils/chatStorage";
+import {
+  clearStoredChatId,
+  getStoredChatId,
+  setStoredChatId,
+} from "../utils/chatStorage";
 
 type ApiChatMessage = {
   id?: string | number;
@@ -160,7 +164,7 @@ export function ChatPage() {
     }
   }, []);
 
-  const fetchMessages = async (currentChatId: string) => {
+  const fetchMessages = useCallback(async (currentChatId: string) => {
     try {
       const chatWithMessages = await apiFetch<ChatWithMessagesResponse>(
         `/chats/${currentChatId}/messages`
@@ -187,7 +191,32 @@ export function ChatPage() {
         },
       ]);
     }
-  };
+  }, []);
+
+  const createAndSelectChat = useCallback(async () => {
+    const chat = await apiFetch<ChatWithMessagesResponse>("/chats/new", {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    const newChatId = chat.chat_id ?? chat.id ?? null;
+
+    if (!newChatId) {
+      setMessages([
+        {
+          id: "create-error",
+          role: "assistant",
+          text: "Не удалось создать новый чат. Попробуй еще раз.",
+        },
+      ]);
+      return null;
+    }
+
+    setChatId(newChatId);
+    setStoredChatId(newChatId);
+    await fetchMessages(newChatId);
+    await fetchChatList(1);
+    return newChatId;
+  }, [fetchChatList, fetchMessages]);
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -211,19 +240,7 @@ export function ChatPage() {
           return;
         }
 
-        const chat = await apiFetch<ChatWithMessagesResponse>("/chats/new", {
-          method: "POST",
-          body: JSON.stringify({}),
-        });
-
-        const newChatId = chat.chat_id ?? chat.id ?? null;
-        setChatId(newChatId);
-
-        if (newChatId) {
-          setStoredChatId(newChatId);
-          await fetchMessages(newChatId);
-          await fetchChatList(1);
-        }
+        await createAndSelectChat();
       } catch (error) {
         const errorMessage =
           error instanceof Error
@@ -248,7 +265,7 @@ export function ChatPage() {
     };
 
     void initializeChat();
-  }, [fetchChatList]);
+  }, [createAndSelectChat, fetchChatList, fetchMessages]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -311,27 +328,7 @@ export function ChatPage() {
     if (isLoading || isSending) return;
     setIsLoading(true);
     try {
-      const chat = await apiFetch<ChatWithMessagesResponse>("/chats/new", {
-        method: "POST",
-        body: JSON.stringify({}),
-      });
-      const newChatId = chat.chat_id ?? chat.id ?? null;
-
-      if (!newChatId) {
-        setMessages([
-          {
-            id: "create-error",
-            role: "assistant",
-            text: "Не удалось создать новый чат. Попробуй еще раз.",
-          },
-        ]);
-        return;
-      }
-
-      setChatId(newChatId);
-      setStoredChatId(newChatId);
-      await fetchMessages(newChatId);
-      await fetchChatList(1);
+      await createAndSelectChat();
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -342,6 +339,51 @@ export function ChatPage() {
           id: "create-error",
           role: "assistant",
           text: `${errorMessage}. Попробуй позже или спроси у тиммейта по бэкенду, жив ли API.`,
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteChat = async () => {
+    if (!chatId || isLoading || isSending) return;
+
+    setIsLoading(true);
+    try {
+      await apiFetch(`/chats/${chatId}`, {
+        method: "DELETE",
+        skipJsonParsing: true,
+      });
+      clearStoredChatId();
+      setChatId(null);
+      setMessages([defaultAssistantMessage]);
+      const updatedChats = await fetchChatList(1);
+      const fallbackChatId = updatedChats[0]?.chat_id;
+
+      if (fallbackChatId) {
+        setChatId(fallbackChatId);
+        setStoredChatId(fallbackChatId);
+        await fetchMessages(fallbackChatId);
+        return;
+      }
+      await createAndSelectChat();
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Не удалось удалить выбранный чат.";
+      const errorCode = (error as { code?: string }).code;
+
+      const feedbackMessage = errorCode
+        ? `${errorMessage} (код ошибки: ${errorCode})`
+        : errorMessage;
+
+      setMessages([
+        {
+          id: "delete-error",
+          role: "assistant",
+          text: `${feedbackMessage}. Попробуй еще раз или спроси у тиммейта по бэкенду, жив ли API.`,
         },
       ]);
     } finally {
@@ -401,6 +443,15 @@ export function ChatPage() {
                 disabled={isLoading || isSending}
               >
                 Новый чат
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                onClick={() => void handleDeleteChat()}
+                disabled={!chatId || isLoading || isSending}
+              >
+                Удалить чат
               </Button>
             </Stack>
 
