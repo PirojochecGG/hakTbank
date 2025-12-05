@@ -1,5 +1,11 @@
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
-import RefreshIcon from '@mui/icons-material/Refresh'
+import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import {
   Box,
   Button,
@@ -13,338 +19,335 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material'
+} from "@mui/material";
 
-import { apiFetch } from '../api'
-import { getStoredChatId, setStoredChatId } from '../utils/chatStorage'
+import { apiFetch } from "../api";
+import { getStoredChatId, setStoredChatId } from "../utils/chatStorage";
 
 type ApiChatMessage = {
-  id?: string | number
-  role?: 'user' | 'assistant'
-  text?: string
-  content?: string
-  message?: string
-}
+  id?: string | number;
+  role?: "user" | "assistant";
+  text?: string;
+  content?: string;
+  message?: string;
+};
 
 type ChatWithMessagesResponse = {
-  id?: string
-  chat_id?: string
-  messages?: ApiChatMessage[]
-}
+  id?: string;
+  chat_id?: string;
+  messages?: ApiChatMessage[];
+};
 
 type ChatResponse = {
-  id?: string
-  chat_id?: string
-  messages?: ApiChatMessage[]
-  message?: ApiChatMessage
-}
+  id?: string;
+  chat_id?: string;
+  messages?: ApiChatMessage[];
+  message?: ApiChatMessage;
+};
 
 type ChatMessage = {
-  id: string
-  role: 'user' | 'assistant'
-  text: string
-}
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+};
 
 type ChatListItem = {
-  id?: string
-  chat_id?: string
-  updated_at?: string
-}
+  id?: string;
+  chat_id?: string;
+  updated_at?: string;
+};
 
 type ChatListResponse = {
-  items?: ChatListItem[]
-  data?: ChatListItem[]
-  page?: number
-  per_page?: number
-  page_size?: number
-  total?: number
-  count?: number
-}
+  items?: ChatListItem[];
+  data?: ChatListItem[];
+  page?: number;
+  per_page?: number;
+  page_size?: number;
+  total?: number;
+  count?: number;
+};
 
 type NormalizedChatListItem = {
-  id: string
-  chat_id: string
-  updated_at?: string
-}
+  id: string;
+  chat_id: string;
+  updated_at?: string;
+};
 
 const defaultAssistantMessage: ChatMessage = {
-  id: 'welcome',
-  role: 'assistant',
-  text: 'Привет. Я помогу тебе не делать импульсивные покупки. Напиши, что хочешь купить.',
-}
+  id: "welcome",
+  role: "assistant",
+  text: "Привет. Я помогу тебе не делать импульсивные покупки. Напиши, что хочешь купить.",
+};
 
 const normalizeMessages = (apiMessages?: ApiChatMessage[]) => {
-  if (!apiMessages?.length) return []
+  if (!apiMessages?.length) return [];
 
   return apiMessages.map((msg, index) => ({
     id: String(msg.id ?? `${Date.now()}-${index}`),
-    role: msg.role ?? 'assistant',
-    text: msg.text ?? msg.content ?? msg.message ?? '',
-  }))
-}
+    role: msg.role ?? "assistant",
+    text: msg.text ?? msg.content ?? msg.message ?? "",
+  }));
+};
 
 const normalizeChatList = (
   apiChats?: ChatListItem[]
 ): NormalizedChatListItem[] => {
-  if (!apiChats?.length) return []
+  if (!apiChats?.length) return [];
 
   return apiChats.map((chat, index) => ({
     id: chat.id ?? chat.chat_id ?? `${index}`,
     chat_id: chat.chat_id ?? chat.id ?? `${index}`,
     updated_at: chat.updated_at,
-  }))
-}
+  }));
+};
 
 export function ChatPage() {
-  const [chatId, setChatId] = useState<string | null>(null)
+  const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     defaultAssistantMessage,
-  ])
+  ]);
 
-  const [input, setInput] = useState('')
-  const [isSending, setIsSending] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingChats, setIsLoadingChats] = useState(false)
-  const [chatList, setChatList] = useState<NormalizedChatListItem[]>([])
-  const [chatPage, setChatPage] = useState(1)
-  const [hasMoreChats, setHasMoreChats] = useState(false)
+  const [input, setInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingChats, setIsLoadingChats] = useState(false);
+  const [chatList, setChatList] = useState<NormalizedChatListItem[]>([]);
+  const [chatPage, setChatPage] = useState(1);
+  const [hasMoreChats, setHasMoreChats] = useState(false);
 
-  const PAGE_SIZE = 10
+  const PAGE_SIZE = 10;
 
-  const fetchChatList = useCallback(
-    async (page = 1) => {
-      setIsLoadingChats(true)
-      try {
-        const query = new URLSearchParams({
-          page: String(page),
-          limit: String(PAGE_SIZE),
-          order: 'desc',
-        })
+  const fetchChatList = useCallback(async (page = 1) => {
+    setIsLoadingChats(true);
+    try {
+      const query = new URLSearchParams({
+        page: String(page),
+        limit: String(PAGE_SIZE),
+        order: "desc",
+      });
 
-        const response = await apiFetch<ChatListResponse | ChatListItem[]>(
-          `/v1/chats?${query.toString()}`
-        )
+      const response = await apiFetch<ChatListResponse | ChatListItem[]>(
+        `/chats?${query.toString()}`
+      );
 
-        const items = Array.isArray(response)
-          ? response
-          : response.items ?? response.data ?? []
-        const normalized = normalizeChatList(items)
-        setChatList(normalized)
+      const items = Array.isArray(response)
+        ? response
+        : response.items ?? response.data ?? [];
+      const normalized = normalizeChatList(items);
+      setChatList(normalized);
 
-        const currentPage =
-          (response as ChatListResponse | undefined)?.page ?? page ?? 1
-        const limit =
-          (response as ChatListResponse | undefined)?.per_page ??
-          (response as ChatListResponse | undefined)?.page_size ??
-          PAGE_SIZE
-        const total =
-          (response as ChatListResponse | undefined)?.total ??
-          (response as ChatListResponse | undefined)?.count ??
-          items.length
+      const currentPage =
+        (response as ChatListResponse | undefined)?.page ?? page ?? 1;
+      const limit =
+        (response as ChatListResponse | undefined)?.per_page ??
+        (response as ChatListResponse | undefined)?.page_size ??
+        PAGE_SIZE;
+      const total =
+        (response as ChatListResponse | undefined)?.total ??
+        (response as ChatListResponse | undefined)?.count ??
+        items.length;
 
-        setHasMoreChats(
-          total > currentPage * limit || normalized.length === limit
-        )
-        setChatPage(currentPage)
-        return normalized
-      } catch (error) {
-        console.error('Ошибка загрузки списка чатов', error)
-        return []
-      } finally {
-        setIsLoadingChats(false)
-      }
-    },
-    []
-  )
+      setHasMoreChats(
+        total > currentPage * limit || normalized.length === limit
+      );
+      setChatPage(currentPage);
+      return normalized;
+    } catch (error) {
+      console.error("Ошибка загрузки списка чатов", error);
+      return [];
+    } finally {
+      setIsLoadingChats(false);
+    }
+  }, []);
 
   const fetchMessages = async (currentChatId: string) => {
     try {
       const chatWithMessages = await apiFetch<ChatWithMessagesResponse>(
-        `/v1/chats/${currentChatId}/messages`
-      )
-      const normalized = normalizeMessages(chatWithMessages.messages)
+        `/chats/${currentChatId}/messages`
+      );
+      const normalized = normalizeMessages(chatWithMessages.messages);
 
-      setMessages(normalized.length ? normalized : [defaultAssistantMessage])
+      setMessages(normalized.length ? normalized : [defaultAssistantMessage]);
     } catch (error) {
       const errorMessage =
         error instanceof Error
           ? error.message
-          : 'Не удалось загрузить историю сообщений.'
-      const errorCode = (error as { code?: string }).code
+          : "Не удалось загрузить историю сообщений.";
+      const errorCode = (error as { code?: string }).code;
 
       const feedbackMessage = errorCode
         ? `${errorMessage} (код ошибки: ${errorCode})`
-        : errorMessage
+        : errorMessage;
 
       setMessages([
         {
-          id: 'load-error',
-          role: 'assistant',
+          id: "load-error",
+          role: "assistant",
           text: `${feedbackMessage}. Попробуй обновить страницу или спроси у тиммейта по бэкенду, жив ли API.`,
         },
-      ])
+      ]);
     }
-  }
+  };
 
   useEffect(() => {
     const initializeChat = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
-        const loadedChats = await fetchChatList(1)
+        const loadedChats = await fetchChatList(1);
 
-        const storedChatId = getStoredChatId()
+        const storedChatId = getStoredChatId();
 
         if (storedChatId) {
-          setChatId(storedChatId)
-          await fetchMessages(storedChatId)
-          return
+          setChatId(storedChatId);
+          await fetchMessages(storedChatId);
+          return;
         }
 
-        const existingChatId = loadedChats[0]?.chat_id
+        const existingChatId = loadedChats[0]?.chat_id;
         if (existingChatId) {
-          setChatId(existingChatId)
-          setStoredChatId(existingChatId)
-          await fetchMessages(existingChatId)
-          return
+          setChatId(existingChatId);
+          setStoredChatId(existingChatId);
+          await fetchMessages(existingChatId);
+          return;
         }
 
-        const chat = await apiFetch<ChatWithMessagesResponse>('/v1/chats/new', {
-          method: 'POST',
+        const chat = await apiFetch<ChatWithMessagesResponse>("/chats/new", {
+          method: "POST",
           body: JSON.stringify({}),
-        })
+        });
 
-        const newChatId = chat.chat_id ?? chat.id ?? null
-        setChatId(newChatId)
+        const newChatId = chat.chat_id ?? chat.id ?? null;
+        setChatId(newChatId);
 
         if (newChatId) {
-          setStoredChatId(newChatId)
-          await fetchMessages(newChatId)
-          await fetchChatList(1)
+          setStoredChatId(newChatId);
+          await fetchMessages(newChatId);
+          await fetchChatList(1);
         }
       } catch (error) {
         const errorMessage =
           error instanceof Error
             ? error.message
-            : 'Не удалось инициализировать чат.'
-        const errorCode = (error as { code?: string }).code
+            : "Не удалось инициализировать чат.";
+        const errorCode = (error as { code?: string }).code;
 
         const feedbackMessage = errorCode
           ? `${errorMessage} (код ошибки: ${errorCode})`
-          : errorMessage
+          : errorMessage;
 
         setMessages([
           {
-            id: 'init-error',
-            role: 'assistant',
+            id: "init-error",
+            role: "assistant",
             text: `${feedbackMessage}. Спроси у тиммейта по бэкенду, жив ли API.`,
           },
-        ])
+        ]);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    void initializeChat()
-  }, [fetchChatList])
+    void initializeChat();
+  }, [fetchChatList]);
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    const trimmed = input.trim()
-    if (!trimmed || isSending || !chatId) return
+    e.preventDefault();
+    const trimmed = input.trim();
+    if (!trimmed || isSending || !chatId) return;
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
-      role: 'user',
+      role: "user",
       text: trimmed,
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    setInput('')
-    setIsSending(true)
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsSending(true);
 
     try {
-      await apiFetch<ChatResponse>(`/v1/chats/${chatId}/messages`, {
-        method: 'POST',
-        body: JSON.stringify({ role: 'user', text: trimmed }),
-      })
+      await apiFetch<ChatResponse>(`/chats/${chatId}/messages`, {
+        method: "POST",
+        body: JSON.stringify({ role: "user", text: trimmed }),
+      });
 
-      await fetchMessages(chatId)
+      await fetchMessages(chatId);
     } catch (error) {
       const errorMessage =
         error instanceof Error
           ? error.message
-          : 'Не удалось связаться с сервером.'
-      const errorCode = (error as { code?: string }).code
+          : "Не удалось связаться с сервером.";
+      const errorCode = (error as { code?: string }).code;
 
       const feedbackMessage = errorCode
         ? `${errorMessage} (код ошибки: ${errorCode})`
-        : errorMessage
+        : errorMessage;
 
       const fallback: ChatMessage = {
         id: String(Date.now()),
-        role: 'assistant',
+        role: "assistant",
         text: `${feedbackMessage}. Спроси у тиммейта по бэкенду, жив ли API.`,
-      }
-      setMessages((prev) => [...prev, fallback])
+      };
+      setMessages((prev) => [...prev, fallback]);
     } finally {
-      setIsSending(false)
+      setIsSending(false);
     }
-  }
+  };
 
   const handleSelectChat = async (newChatId: string) => {
-    if (isLoading || isSending || newChatId === chatId) return
+    if (isLoading || isSending || newChatId === chatId) return;
 
-    setChatId(newChatId)
-    setStoredChatId(newChatId)
-    setIsLoading(true)
+    setChatId(newChatId);
+    setStoredChatId(newChatId);
+    setIsLoading(true);
     try {
-      await fetchMessages(newChatId)
+      await fetchMessages(newChatId);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleCreateChat = async () => {
-    if (isLoading || isSending) return
-    setIsLoading(true)
+    if (isLoading || isSending) return;
+    setIsLoading(true);
     try {
-      const chat = await apiFetch<ChatWithMessagesResponse>('/v1/chats/new', {
-        method: 'POST',
+      const chat = await apiFetch<ChatWithMessagesResponse>("/chats/new", {
+        method: "POST",
         body: JSON.stringify({}),
-      })
-      const newChatId = chat.chat_id ?? chat.id ?? null
+      });
+      const newChatId = chat.chat_id ?? chat.id ?? null;
 
       if (!newChatId) {
         setMessages([
           {
-            id: 'create-error',
-            role: 'assistant',
-            text: 'Не удалось создать новый чат. Попробуй еще раз.',
+            id: "create-error",
+            role: "assistant",
+            text: "Не удалось создать новый чат. Попробуй еще раз.",
           },
-        ])
-        return
+        ]);
+        return;
       }
 
-      setChatId(newChatId)
-      setStoredChatId(newChatId)
-      await fetchMessages(newChatId)
-      await fetchChatList(1)
+      setChatId(newChatId);
+      setStoredChatId(newChatId);
+      await fetchMessages(newChatId);
+      await fetchChatList(1);
     } catch (error) {
       const errorMessage =
         error instanceof Error
           ? error.message
-          : 'Не удалось создать новый чат.'
+          : "Не удалось создать новый чат.";
       setMessages([
         {
-          id: 'create-error',
-          role: 'assistant',
+          id: "create-error",
+          role: "assistant",
           text: `${errorMessage}. Попробуй позже или спроси у тиммейта по бэкенду, жив ли API.`,
         },
-      ])
+      ]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const chatListTitle = useMemo(
     () =>
@@ -353,47 +356,47 @@ export function ChatPage() {
         title: `Чат ${chat.chat_id.slice(0, 8)}`,
       })),
     [chatList]
-  )
+  );
 
   return (
     <Box>
       <Stack spacing={2}>
         <Box>
-          <Typography variant='h4' gutterBottom>
+          <Typography variant="h4" gutterBottom>
             Чат с моделью
           </Typography>
-          <Typography variant='body2' color='text.secondary'>
+          <Typography variant="body2" color="text.secondary">
             Опиши покупку или ситуацию, а ассистент подскажет, стоит ли ждать и
             до какой даты покупка будет комфортной.
           </Typography>
         </Box>
 
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+        <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
           <Paper
             sx={{
               p: 2,
-              width: { xs: '100%', md: 300 },
+              width: { xs: "100%", md: 300 },
               flexShrink: 0,
-              display: 'flex',
-              flexDirection: 'column',
+              display: "flex",
+              flexDirection: "column",
               gap: 2,
             }}
           >
-            <Stack direction='row' spacing={1} alignItems='center'>
-              <Typography variant='h6' component='div' sx={{ flex: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography variant="h6" component="div" sx={{ flex: 1 }}>
                 Ваши чаты
               </Typography>
               <IconButton
-                aria-label='Обновить'
-                size='small'
+                aria-label="Обновить"
+                size="small"
                 onClick={() => void fetchChatList(chatPage)}
                 disabled={isLoadingChats}
               >
-                <RefreshIcon fontSize='small' />
+                <RefreshIcon fontSize="small" />
               </IconButton>
               <Button
-                variant='outlined'
-                size='small'
+                variant="outlined"
+                size="small"
                 onClick={() => void handleCreateChat()}
                 disabled={isLoading || isSending}
               >
@@ -403,11 +406,11 @@ export function ChatPage() {
 
             <Divider />
 
-            <Box sx={{ flex: 1, overflowY: 'auto' }}>
+            <Box sx={{ flex: 1, overflowY: "auto" }}>
               {isLoadingChats ? (
-                <Stack alignItems='center' spacing={1}>
+                <Stack alignItems="center" spacing={1}>
                   <CircularProgress size={24} />
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography variant="body2" color="text.secondary">
                     Загружаем чаты...
                   </Typography>
                 </Stack>
@@ -431,8 +434,8 @@ export function ChatPage() {
                   ))}
                   {!chatListTitle.length && (
                     <Typography
-                      variant='body2'
-                      color='text.secondary'
+                      variant="body2"
+                      color="text.secondary"
                       sx={{ px: 2 }}
                     >
                       Чатов пока нет. Создайте новый!
@@ -442,21 +445,21 @@ export function ChatPage() {
               )}
             </Box>
 
-            <Stack direction='row' spacing={1} justifyContent='space-between'>
+            <Stack direction="row" spacing={1} justifyContent="space-between">
               <Button
-                variant='outlined'
-                size='small'
+                variant="outlined"
+                size="small"
                 onClick={() => void fetchChatList(Math.max(1, chatPage - 1))}
                 disabled={isLoadingChats || chatPage <= 1}
               >
                 Назад
               </Button>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography variant="caption" color="text.secondary">
                 Страница {chatPage}
               </Typography>
               <Button
-                variant='outlined'
-                size='small'
+                variant="outlined"
+                size="small"
                 onClick={() => void fetchChatList(chatPage + 1)}
                 disabled={isLoadingChats || !hasMoreChats}
               >
@@ -468,19 +471,19 @@ export function ChatPage() {
           <Paper
             sx={{
               p: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              height: { xs: '70vh', md: '70vh' },
+              display: "flex",
+              flexDirection: "column",
+              height: { xs: "70vh", md: "70vh" },
               flex: 1,
             }}
           >
             <Box
               sx={{
                 flex: 1,
-                overflowY: 'auto',
+                overflowY: "auto",
                 mb: 2,
-                display: 'flex',
-                flexDirection: 'column',
+                display: "flex",
+                flexDirection: "column",
                 gap: 1.5,
               }}
             >
@@ -488,40 +491,40 @@ export function ChatPage() {
                 <Box
                   key={msg.id}
                   sx={{
-                    display: 'flex',
+                    display: "flex",
                     justifyContent:
-                      msg.role === 'user' ? 'flex-end' : 'flex-start',
+                      msg.role === "user" ? "flex-end" : "flex-start",
                   }}
                 >
                   <Box
                     sx={{
-                      maxWidth: '75%',
+                      maxWidth: "75%",
                       bgcolor:
-                        msg.role === 'user'
-                          ? 'primary.main'
-                          : 'background.default',
-                      color: msg.role === 'user' ? '#000000' : 'text.primary',
+                        msg.role === "user"
+                          ? "primary.main"
+                          : "background.default",
+                      color: msg.role === "user" ? "#000000" : "text.primary",
                       borderRadius:
-                        msg.role === 'user'
-                          ? '16px 4px 16px 16px'
-                          : '4px 16px 16px 16px',
+                        msg.role === "user"
+                          ? "16px 4px 16px 16px"
+                          : "4px 16px 16px 16px",
                       p: 1.5,
                     }}
                   >
                     <Typography
-                      variant='caption'
+                      variant="caption"
                       sx={{
-                        display: 'block',
+                        display: "block",
                         mb: 0.5,
                         color:
-                          msg.role === 'user'
-                            ? 'rgba(0,0,0,0.6)'
-                            : 'text.secondary',
+                          msg.role === "user"
+                            ? "rgba(0,0,0,0.6)"
+                            : "text.secondary",
                       }}
                     >
-                      {msg.role === 'user' ? 'Ты' : 'Ассистент'}
+                      {msg.role === "user" ? "Ты" : "Ассистент"}
                     </Typography>
-                    <Typography variant='body2' sx={{ whiteSpace: 'pre-wrap' }}>
+                    <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
                       {msg.text}
                     </Typography>
                   </Box>
@@ -530,32 +533,32 @@ export function ChatPage() {
             </Box>
 
             <Box
-              component='form'
+              component="form"
               onSubmit={handleSubmit}
-              sx={{ display: 'flex', gap: 1 }}
+              sx={{ display: "flex", gap: 1 }}
             >
               <TextField
                 fullWidth
                 multiline
                 minRows={2}
                 maxRows={4}
-                placeholder='Опиши покупку или задай вопрос...'
+                placeholder="Опиши покупку или задай вопрос..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
               />
               <Button
-                type='submit'
-                variant='contained'
-                color='primary'
+                type="submit"
+                variant="contained"
+                color="primary"
                 disabled={isSending || !input.trim() || isLoading || !chatId}
-                sx={{ alignSelf: 'flex-end', whiteSpace: 'nowrap' }}
+                sx={{ alignSelf: "flex-end", whiteSpace: "nowrap" }}
               >
-                {isSending ? 'Отправка...' : 'Отправить'}
+                {isSending ? "Отправка..." : "Отправить"}
               </Button>
             </Box>
           </Paper>
         </Stack>
       </Stack>
     </Box>
-  )
+  );
 }
