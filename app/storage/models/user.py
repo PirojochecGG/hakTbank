@@ -28,7 +28,7 @@ class User(Base):
     monthly_salary:   Mapped[int]           = mapped_column(Integer, default=0, doc="Месячная зарплата (рубли)")
     current_savings:  Mapped[int]           = mapped_column(Integer, default=0, doc="Текущие накопления (рубли)")
     blacklist:        Mapped[list[str]]     = mapped_column(JSON, default=list, doc="Запрещенные категории")
-    cooling_ranges:   Mapped[dict]          = mapped_column(JSON, default=dict, doc="Диапазоны охлаждения {price: days}")
+    cooling_ranges:   Mapped[list[dict]]    = mapped_column(JSON, default=list, doc="Диапазоны охлаждения [{min_amount, max_amount, days}]")
     notify_frequency: Mapped[str]           = mapped_column(String(20), default="weekly", doc="Частота уведомлений")
     notify_channel:   Mapped[str]           = mapped_column(String(50), default="app", doc="Канал уведомлений")
     meta:             Mapped[Optional[dict]]= mapped_column(JSON)

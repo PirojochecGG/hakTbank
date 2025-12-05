@@ -132,9 +132,10 @@ class PurchaseManager:
 
         # Расчет дней охлаждения по диапазонам
         cooling_days = 0
-        for price_threshold in sorted(user.cooling_ranges.keys(), key=int):
-            if price >= int(price_threshold):
-                cooling_days = user.cooling_ranges[price_threshold]
+        for range_item in user.cooling_ranges:
+            if range_item['min_amount'] <= price <= range_item['max_amount']:
+                cooling_days = range_item['days']
+                break
 
         # Расчет дней накопления
         savings_days = 0

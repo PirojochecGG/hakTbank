@@ -14,13 +14,13 @@ class UserRouterManager:
         return UserProfileResponse(
             nickname=user.nickname,
             email=user.email,
+            blacklist=user.blacklist,
             monthly_savings=user.monthly_savings,
             monthly_salary=user.monthly_salary,
             current_savings=user.current_savings,
-            blacklist=user.blacklist,
-            cooling_ranges=user.cooling_ranges,
-            notify_frequency=user.notify_frequency,
             notify_channel=user.notify_channel,
+            notify_frequency=user.notify_frequency,
+            cooling_ranges=[CoolingRange(**r) for r in user.cooling_ranges],
         )
 
     @staticmethod
@@ -41,7 +41,7 @@ class UserRouterManager:
         if request.notify_channel is not None:
             user.notify_channel = request.notify_channel
         if request.cooling_ranges is not None:
-            user.cooling_ranges = {r.min_amount: r.days for r in request.cooling_ranges}
+            user.cooling_ranges = [r.model_dump() for r in request.cooling_ranges]
 
         await db.commit()
         await db.refresh(user)

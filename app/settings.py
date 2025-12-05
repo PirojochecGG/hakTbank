@@ -30,8 +30,9 @@ class Settings(BaseSettings):
     YOOKASSA_SHOP_ID: str
 
     GEMINI_API_KEY: str
-    OPENAI_API_KEY: str
     NEBIUS_API_KEY: str
+    OPENAI_API_KEY: str
+    OPENAI_API_URL: str
 
     LOG_SERVICE_NAME: str = "hack-t-bank"
     LOG_LEVEL: str = "INFO"

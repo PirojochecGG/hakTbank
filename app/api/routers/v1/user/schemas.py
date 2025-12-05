@@ -3,6 +3,12 @@ from pydantic import BaseModel, Field
 from typing import Optional, Literal
 
 
+class CoolingRange(BaseModel):
+    """Диапазон охлаждения."""
+    min_amount: int = Field(ge=0)
+    max_amount: int = Field(ge=0)
+    days: int = Field(ge=0)
+
 class UserProfileResponse(BaseModel):
     """Профиль пользователя."""
     nickname: str
@@ -11,16 +17,11 @@ class UserProfileResponse(BaseModel):
     monthly_salary: Optional[int]
     current_savings: int
     blacklist: list[str]
-    cooling_ranges: dict
+    cooling_ranges: list[CoolingRange]
     notify_frequency: str
     notify_channel: str
 
 
-class CoolingRange(BaseModel):
-    """Диапазон охлаждения."""
-    min_amount: int = Field(ge=0)
-    max_amount: int = Field(ge=0)
-    days: int = Field(ge=0)
 
 
 class UpdateProfileRequest(BaseModel):
