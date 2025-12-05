@@ -34,7 +34,9 @@ export function ProfilePage() {
   const [currentSavings, setCurrentSavings] = useState("");
   const [useSavings, setUseSavings] = useState(true);
 
-  const [notifyChannel, setNotifyChannel] = useState<"none" | "email">("none");
+  const [notifyChannel, setNotifyChannel] = useState<"none" | "email" | "app">(
+    "none"
+  );
   const [notifyFrequency, setNotifyFrequency] = useState<
     "daily" | "weekly" | "monthly"
   >("weekly");
@@ -484,12 +486,13 @@ export function ProfilePage() {
                   label="Канал"
                   value={notifyChannel}
                   onChange={(e) =>
-                    setNotifyChannel(e.target.value as "none" | "email")
+                    setNotifyChannel(e.target.value as "none" | "email" | "app")
                   }
                   fullWidth
                 >
                   <MenuItem value="none">Не напоминать</MenuItem>
                   <MenuItem value="email">E-mail</MenuItem>
+                  <MenuItem value="app">В приложении</MenuItem>
                 </TextField>
 
                 <TextField
