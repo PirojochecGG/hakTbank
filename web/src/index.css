@@ -10,11 +10,30 @@ body,
   margin: 0;
   padding: 0;
   height: 100%;
+  width: 100%;
 }
 
 /* Говорим браузеру, что у нас тёмная тема, чтобы дефолтные элементы (в т.ч. скроллбар) были тёмные */
 html {
   color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Запрещаем масштабирование на мобильных */
+input,
+textarea,
+select,
+button {
+  font-size: 16px;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* Firefox: скролл цвета меню на тёмном фоне */
@@ -53,4 +72,20 @@ input[type="number"]::-webkit-outer-spin-button {
 
 input[type="number"] {
   -moz-appearance: textfield;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 600px) {
+  html,
+  body,
+  #root {
+    font-size: 16px;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px !important;
+  }
 }

@@ -313,15 +313,19 @@ export function ProfilePage() {
             display="flex"
             justifyContent="space-between"
             alignItems="center"
+            gap={1}
+            flexWrap="wrap"
           >
             <Typography variant="h6">Период охлаждения</Typography>
             <Button
               type="button"
               variant="outlined"
+              size="small"
               startIcon={<AddIcon />}
               onClick={handleAddRule}
+              sx={{ whiteSpace: "nowrap" }}
             >
-              Добавить правило
+              Добавить
             </Button>
           </Box>
           <Typography variant="body2" color="text.secondary" mt={1} mb={2}>
@@ -330,16 +334,14 @@ export function ProfilePage() {
           </Typography>
 
           <Stack spacing={1.5}>
-            <Grid container sx={{ fontSize: 12, color: "text.secondary" }}>
-              <Grid size={{ xs: 12, md: 3 }}>От, ₽</Grid>
-              <Grid size={{ xs: 12, md: 3 }}>До, ₽</Grid>
-              <Grid size={{ xs: 12, md: 3 }}>Дней ожидания</Grid>
-              <Grid size={{ xs: 12, md: 3 }} />
-            </Grid>
+            
 
             {coolingRanges.map((rule) => (
-              <Grid key={rule.id} container spacing={1} alignItems="center">
-                <Grid size={{ xs: 12, md: 3 }}>
+              <Grid key={rule.id} container spacing={1} alignItems="flex-start">
+                <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 1, md: 1 } }}>
+                  <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                    От, ₽
+                  </Typography>
                   <TextField
                     fullWidth
                     type="text"
@@ -352,7 +354,10 @@ export function ProfilePage() {
                     }}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, md: 3 }}>
+                <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 2, md: 2 } }}>
+                  <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                    До, ₽
+                  </Typography>
                   <TextField
                     fullWidth
                     type="text"
@@ -366,23 +371,37 @@ export function ProfilePage() {
                     }}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, md: 3 }}>
-                  <TextField
-                    fullWidth
-                    type="text"
-                    inputMode="numeric"
-                    size="small"
-                    value={rule.days}
-                    onChange={(e) => {
-                      const filtered = filterNumberInput(e.target.value);
-                      handleRuleChange(rule.id, "days", filtered);
-                    }}
-                  />
+                <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 3, md: 3 } }}>
+                  <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                    Дней ожидания
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end" }}>
+                    <TextField
+                      fullWidth
+                      type="text"
+                      inputMode="numeric"
+                      size="small"
+                      value={rule.days}
+                      onChange={(e) => {
+                        const filtered = filterNumberInput(e.target.value);
+                        handleRuleChange(rule.id, "days", filtered);
+                      }}
+                    />
+                    <IconButton
+                      color="inherit"
+                      onClick={() => handleRemoveRule(rule.id)}
+                      size="small"
+                      sx={{ display: { xs: "none", md: "flex" } }}
+                    >
+                      <DeleteOutlineIcon />
+                    </IconButton>
+                  </Box>
                 </Grid>
-                <Grid size={{ xs: 12, md: 3 }}>
+                <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 4, md: 4 }, display: { xs: "flex", md: "none" }, alignItems: "flex-start", pt: 0.5 }}>
                   <IconButton
                     color="inherit"
                     onClick={() => handleRemoveRule(rule.id)}
+                    size="small"
                   >
                     <DeleteOutlineIcon />
                   </IconButton>
@@ -403,11 +422,10 @@ export function ProfilePage() {
                 То, что ты точно не хочешь покупать. Например: «кейсы в играх»,
                 «доставка еды», «бесполезные подписки».
               </Typography>
-              <Box display="flex" gap={1}>
+              <Box display="flex" gap={1} flexWrap="wrap">
                 <TextField
-                  fullWidth
-                  label="Категория"
-                  placeholder="Название категории"
+                  placeholder="Категория"
+                  size="small"
                   value={blacklistInput}
                   onChange={(e) => setBlacklistInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -416,12 +434,15 @@ export function ProfilePage() {
                       handleAddBlacklistItem();
                     }
                   }}
+                  sx={{ flex: 1, minWidth: "150px" }}
                 />
                 <Button
                   type="button"
                   variant="contained"
                   color="primary"
+                  size="small"
                   onClick={handleAddBlacklistItem}
+                  sx={{ whiteSpace: "nowrap" }}
                 >
                   Добавить
                 </Button>
