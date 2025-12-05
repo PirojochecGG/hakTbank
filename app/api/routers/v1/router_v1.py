@@ -1,15 +1,12 @@
-# fmt: off
-# isort: off
 from fastapi import APIRouter
 
-from .auth import router as auths_router
+from .auth import router as auth_router
+from .user import router as user_router
 
 
 router_v1 = APIRouter(prefix="/v1")
-
-
-router_v1 = APIRouter()
-router_v1.include_router(auths_router)
+router_v1.include_router(auth_router)
+router_v1.include_router(user_router)
 
 
 __all__ = ["router_v1"]
