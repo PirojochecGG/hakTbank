@@ -8,6 +8,8 @@ from loguru import logger
 
 from app.services import container
 from app.api.server import start_server
+from app.scheduler import start_scheduler
+from app.scheduler import shutdown_scheduler
 from app.services import get_service
 from app.logger import setup_logger
 
@@ -19,7 +21,7 @@ async def main() -> None:
     try:
         setup_logger()
         await container.initialize()
-        #await start_scheduler()
+        await start_scheduler()
 
         _, pending = await asyncio.wait([
             asyncio.create_task(start_server()),
@@ -34,6 +36,7 @@ async def main() -> None:
         raise
 
     finally:
+        await shutdown_scheduler()
         await container.shutdown()
 
 
