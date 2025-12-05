@@ -18,13 +18,14 @@ class Transaction(Base):
     """Модель транзакции платежа."""
     __tablename__ = "transactions"
 
-    user_id:    Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
-    amount:     Mapped[int] = mapped_column(Integer, nullable=False)
-    currency:   Mapped[str] = mapped_column(String(10), default="RUB")
-    payment_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    product:    Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    status:     Mapped[str] = mapped_column(String(50), nullable=False, index=True)
-    meta_data:  Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    user_id:      Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    amount:       Mapped[int] = mapped_column(Integer, nullable=False)
+    currency:     Mapped[str] = mapped_column(String(10), default="RUB")
+    payment_id:   Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    product:      Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    status:       Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    payment_type: Mapped[str] = mapped_column(String(50), default="payment", index=True)
+    meta_data:    Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
     # Отношения
     user: Mapped["User"] = relationship(back_populates="transactions")

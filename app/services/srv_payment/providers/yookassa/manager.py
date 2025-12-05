@@ -8,8 +8,8 @@ from typing import Optional
 from uuid import UUID, uuid4
 from yookassa import Configuration, Payment
 
-from ...objects import PaymentResponse, WebhookData, PaymentStatus
 from app.settings import SETTINGS
+from ...objects import *
 
 
 class YookassaManager:
@@ -84,6 +84,7 @@ class YookassaManager:
             return PaymentResponse(
                 payment_id=payment.id,
                 confirmation_url=payment.confirmation.confirmation_url,
+                status=payment.status,
                 amount=amount
             )
         except Exception as e:
@@ -120,8 +121,8 @@ class YookassaManager:
             payment = await asyncio.to_thread(_create_recurring)
             return PaymentResponse(
                 payment_id=payment.id,
-                amount=amount,
-                status=payment.status
+                status=payment.status,
+                amount=amount
             )
         except Exception as e:
             logger.error(f"Ошибка создания рекурентного платежа: {e}")
@@ -129,7 +130,7 @@ class YookassaManager:
 
 
     @classmethod
-    async def parse_webhook(cls, webhook_data: dict, client_ip: str = None) -> Optional[WebhookData]:
+    async def parse_webhook(cls, webhook_data: dict, client_ip: str = None) -> Optional[YookassaWebhook]:
         """Парсит и валидирует вебхук от Юкассы."""
         try:
             # Проверка IP-адреса
@@ -146,7 +147,7 @@ class YookassaManager:
             if not (status := await cls.check_payment(payment_id)):
                 return None
 
-            return WebhookData(
+            return YookassaWebhook(
                 payment_id=payment_id,
                 metadata=payment.get("metadata"),
                 amount=int(float(payment["amount"]["value"])),

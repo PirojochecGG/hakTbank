@@ -11,6 +11,8 @@ from app.services.srv_chat import ChatService
 from app.services.srv_chat import ChatManager
 from app.services.srv_redis import RedisService
 from app.services.srv_redis import RedisManager
+from app.services.srv_payment import PaymentService
+from app.services.srv_payment import PaymentManager
 from app.services.srv_purchase import PurchaseService
 from app.services.srv_purchase import PurchaseManager
 
@@ -37,6 +39,7 @@ class ServiceContainer:
         self.register("auth", AuthService(AuthManager()))
         self.register("chat", ChatService(ChatManager()))
         self.register("redis", RedisService(RedisManager()))
+        self.register("payment", PaymentService(PaymentManager()))
         self.register("purchase", PurchaseService(PurchaseManager()))
 
         self._initialized = True
@@ -70,6 +73,10 @@ class Services:
     @property
     def redis(self) -> "RedisService":
         return container.get("redis")
+
+    @property
+    def payment(self) -> "PaymentService":
+        return container.get("payment")
 
     @property
     def sub(self) -> "SubService":

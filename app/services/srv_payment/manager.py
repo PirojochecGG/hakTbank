@@ -85,7 +85,6 @@ class PaymentManager:
                     payment_id=payment_id,
                     payment_type="renewal",
                     product=tariff.sys_name,
-                    provider="yookassa",
                     meta_data={
                         "user_id": str(user_id),
                         "tariff_id": str(tariff_id)
@@ -114,12 +113,11 @@ class PaymentManager:
         db.add(
             Transaction(
                 user_id=user_id,
-                provider="yookassa",
-                payment_id=parsed_data.payment_id,
-                amount=parsed_data.amount,
                 product=tariff.sys_name,
+                amount=parsed_data.amount,
                 status=parsed_data.status.value,
-                payment_type=metadata.get("payment_type", "single"),
+                payment_id=parsed_data.payment_id,
+                payment_type=metadata.get("payment_type"),
                 meta_data=metadata,
             )
         )
