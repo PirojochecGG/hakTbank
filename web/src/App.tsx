@@ -15,11 +15,11 @@ function App() {
       <CssBaseline />
       <Layout>
         <Routes>
-          <Route path="/" element={<Navigate to="/profile" replace />} />
+          <Route path="/" element={<Navigate to="/user/profile" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route
-            path="/profile"
+            path="/user/profile"
             element={
               <RequireAuth>
                 <ProfilePage />
@@ -34,7 +34,7 @@ function App() {
               </RequireAuth>
             }
           />
-          <Route path="*" element={<Navigate to="/profile" replace />} />
+          <Route path="*" element={<Navigate to="/user/profile" replace />} />
         </Routes>
       </Layout>
     </ThemeProvider>

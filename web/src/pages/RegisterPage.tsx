@@ -13,7 +13,7 @@ export function RegisterPage() {
 
   const redirectTo = useMemo(() => {
     const state = location.state as LocationState;
-    return state?.from?.pathname || "/profile";
+    return state?.from?.pathname || "/user/profile";
   }, [location.state]);
 
   useEffect(() => {

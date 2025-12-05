@@ -97,7 +97,7 @@ export function Layout({ children }: LayoutProps) {
           <List>
             <ListItemButton
               component={NavLink}
-              to="/profile"
+              to="/user/profile"
               sx={{
                 borderRadius: 2,
                 mb: 1,
