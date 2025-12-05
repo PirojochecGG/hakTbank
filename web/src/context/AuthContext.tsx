@@ -88,9 +88,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       const normalized = normalizeProfile(data);
       setProfile(normalized);
+      if (data.nickname !== undefined && data.nickname !== null) {
+        setUser((prev) => ({ ...(prev ?? {}), nickname: data.nickname ?? "" }));
+      }
       return normalized;
     } catch (error) {
       console.error("Не удалось получить профиль", error);
+      return null;
+    }
+  }, [token]);
+
+  const loadCurrentUser = useCallback(async () => {
+    if (!token) return null;
+    try {
+      const data = await apiFetch<AuthUser>("/auth/me", {
+        method: "GET",
+      });
+      setUser(data);
+      return data;
+    } catch (error) {
+      console.error("Не удалось получить данные пользователя", error);
       return null;
     }
   }, [token]);
@@ -106,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setAccessToken(token);
-      await refreshProfile();
+      await Promise.all([loadCurrentUser(), refreshProfile()]);
       if (isMounted) setIsInitializing(false);
     };
 
@@ -115,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       isMounted = false;
     };
-  }, [refreshProfile, token]);
+  }, [loadCurrentUser, refreshProfile, token]);
 
   const login = useCallback(
     async (payload: { email: string; password: string }) => {
@@ -131,7 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(data.user ?? null);
       await refreshProfile();
     },
-    [refreshProfile]
+    [refreshProfile],
   );
 
   const register = useCallback(
