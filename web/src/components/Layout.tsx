@@ -15,7 +15,7 @@ import {
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const drawerWidth = 260;
@@ -26,6 +26,7 @@ type LayoutProps = {
 
 export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { token, user, logout } = useAuth();
 
   const handleLogout = () => {
@@ -34,6 +35,7 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const userInitial = user?.nickname?.[0] || user?.email?.[0] || "?";
+  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
 
   return (
     <Box
@@ -48,7 +50,7 @@ export function Layout({ children }: LayoutProps) {
         component="main"
         sx={{
           minHeight: "100vh",
-          mr: { xs: 0, md: `${drawerWidth}px` },
+          mr: { xs: 0, md: isAuthPage ? 0 : `${drawerWidth}px` },
           p: { xs: 2, md: 3 },
         }}
       >
@@ -56,6 +58,7 @@ export function Layout({ children }: LayoutProps) {
       </Box>
 
       {/* Фиксированное правое меню, без своего скролла */}
+      {!isAuthPage && (
       <Drawer
         variant="permanent"
         anchor="right"
@@ -187,6 +190,7 @@ export function Layout({ children }: LayoutProps) {
           </Typography>
         </Box>
       </Drawer>
+      )}
     </Box>
   );
 }
