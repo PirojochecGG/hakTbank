@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -9,31 +9,134 @@ import {
 } from "@mui/material";
 import { apiFetch } from "../api";
 
+type ApiChatMessage = {
+  id?: string | number;
+  role?: "user" | "assistant";
+  text?: string;
+  content?: string;
+  message?: string;
+};
+
+type ChatWithMessagesResponse = {
+  id?: string;
+  chat_id?: string;
+  messages?: ApiChatMessage[];
+};
+
+type ChatResponse = {
+  id?: string;
+  chat_id?: string;
+  messages?: ApiChatMessage[];
+  message?: ApiChatMessage;
+};
+
 type ChatMessage = {
-  id: number;
+  id: string;
   role: "user" | "assistant";
   text: string;
 };
 
+const defaultAssistantMessage: ChatMessage = {
+  id: "welcome",
+  role: "assistant",
+  text: "Привет. Я помогу тебе не делать импульсивные покупки. Напиши, что хочешь купить.",
+};
+const normalizeMessages = (apiMessages?: ApiChatMessage[]) => {
+  if (!apiMessages?.length) return [];
+
+  return apiMessages.map((msg, index) => ({
+    id: String(msg.id ?? `${Date.now()}-${index}`),
+    role: msg.role ?? "assistant",
+    text: msg.text ?? msg.content ?? msg.message ?? "",
+  }));
+};
+
 export function ChatPage() {
+  const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 1,
-      role: "assistant",
-      text: "Привет. Я помогу тебе не делать импульсивные покупки. Напиши, что хочешь купить.",
-    },
+    defaultAssistantMessage,
   ]);
 
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchMessages = async (currentChatId: string) => {
+    try {
+      const chatWithMessages = await apiFetch<ChatWithMessagesResponse>(
+        `/v1/chats/${currentChatId}/messages`
+      );
+      const normalized = normalizeMessages(chatWithMessages.messages);
+
+      setMessages(normalized.length ? normalized : [defaultAssistantMessage]);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Не удалось загрузить историю сообщений.";
+      const errorCode = (error as { code?: string }).code;
+
+      const feedbackMessage = errorCode
+        ? `${errorMessage} (код ошибки: ${errorCode})`
+        : errorMessage;
+
+      setMessages([
+        {
+          id: "load-error",
+          role: "assistant",
+          text: `${feedbackMessage}. Попробуй обновить страницу или спроси у тиммейта по бэкенду, жив ли API.`,
+        },
+      ]);
+    }
+  };
+
+  useEffect(() => {
+    const initializeChat = async () => {
+      setIsLoading(true);
+      try {
+        const chat = await apiFetch<ChatWithMessagesResponse>("/chats/new", {
+          method: "POST",
+        });
+
+        const newChatId = chat.chat_id ?? chat.id ?? null;
+        setChatId(newChatId);
+
+        if (newChatId) {
+          await fetchMessages(newChatId);
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Не удалось инициализировать чат.";
+        const errorCode = (error as { code?: string }).code;
+
+        const feedbackMessage = errorCode
+          ? `${errorMessage} (код ошибки: ${errorCode})`
+          : errorMessage;
+
+        setMessages([
+          {
+            id: "init-error",
+            role: "assistant",
+            text: `${feedbackMessage}. Спроси у тиммейта по бэкенду, жив ли API.`,
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void initializeChat();
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed || isSending) return;
+    if (!trimmed || isSending || !chatId) return;
 
     const userMessage: ChatMessage = {
-      id: Date.now(),
+      id: crypto.randomUUID(),
       role: "user",
       text: trimmed,
     };
@@ -43,18 +146,12 @@ export function ChatPage() {
     setIsSending(true);
 
     try {
-      const data = await apiFetch<{ reply: string }>("/chat", {
+      await apiFetch<ChatResponse>(`/chats/${chatId}/messages`, {
         method: "POST",
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({ role: "user", text: trimmed }),
       });
 
-      const assistantMessage: ChatMessage = {
-        id: Date.now() + 1,
-        role: "assistant",
-        text: data.reply,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      await fetchMessages(chatId);
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -67,7 +164,7 @@ export function ChatPage() {
         : errorMessage;
 
       const fallback: ChatMessage = {
-        id: Date.now() + 2,
+        id: String(Date.now()),
         role: "assistant",
         text: `${feedbackMessage}. Спроси у тиммейта по бэкенду, жив ли API.`,
       };
@@ -171,7 +268,7 @@ export function ChatPage() {
               type="submit"
               variant="contained"
               color="primary"
-              disabled={isSending || !input.trim()}
+              disabled={isSending || !input.trim() || isLoading || !chatId}
               sx={{ alignSelf: "flex-end", whiteSpace: "nowrap" }}
             >
               {isSending ? "Отправка..." : "Отправить"}

@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async () => {
     if (!token) return null;
     try {
-      const data = await apiFetch<UserProfileResponse>("/v1/user/profile", {
+      const data = await apiFetch<UserProfileResponse>("/user/profile", {
         method: "GET",
       });
       const normalized = normalizeProfile(data);
