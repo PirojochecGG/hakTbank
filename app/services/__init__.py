@@ -4,11 +4,13 @@ from loguru import logger
 from typing import Dict, Any
 
 from app.services.srv_auth import AuthService
-from app.services.srv_auth.manager import AuthManager
+from app.services.srv_auth import AuthManager
 from app.services.srv_chat import ChatService
-from app.services.srv_chat.manager import ChatManager
+from app.services.srv_chat import ChatManager
+from app.services.srv_redis import RedisService
+from app.services.srv_redis import RedisManager
 from app.services.srv_purchase import PurchaseService
-from app.services.srv_purchase.manager import PurchaseManager
+from app.services.srv_purchase import PurchaseManager
 
 
 class ServiceContainer:
@@ -31,6 +33,7 @@ class ServiceContainer:
         logger.info("Инициализация сервисов...")
         self.register("auth", AuthService(AuthManager()))
         self.register("chat", ChatService(ChatManager()))
+        self.register("redis", RedisService(RedisManager()))
         self.register("purchase", PurchaseService(PurchaseManager()))
 
         self._initialized = True
@@ -60,6 +63,10 @@ class Services:
     @property
     def purchase(self) -> "PurchaseService":
         return container.get("purchase")
+
+    @property
+    def redis(self) -> "RedisService":
+        return container.get("redis")
 
 
 get_service = Services()
