@@ -19,7 +19,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { apiFetch } from "../api";
 import { useAuth, type ProfileRule } from "../context/AuthContext";
 
-type CooldownRule = {
+type CoolingRange = {
   id: number;
   minAmount: number;
   maxAmount: number | null;
@@ -29,20 +29,17 @@ type CooldownRule = {
 export function ProfilePage() {
   const { profile, refreshProfile } = useAuth();
   const [nickname, setNickname] = useState("");
-  const [age, setAge] = useState("");
   const [monthlyIncome, setMonthlyIncome] = useState("");
-  const [monthlyFreeBudget, setMonthlyFreeBudget] = useState("");
+  const [monthlySavings, setMonthlySavings] = useState("");
   const [currentSavings, setCurrentSavings] = useState("");
   const [useSavings, setUseSavings] = useState(true);
 
-  const [notificationChannel, setNotificationChannel] = useState<
-    "none" | "email"
-  >("none");
-  const [notificationFrequency, setNotificationFrequency] = useState<
+  const [notifyChannel, setNotifyChannel] = useState<"none" | "email">("none");
+  const [notifyFrequency, setNotifyFrequency] = useState<
     "daily" | "weekly" | "monthly"
   >("weekly");
 
-  const [cooldownRules, setCooldownRules] = useState<CooldownRule[]>([
+  const [coolingRanges, setCoolingRanges] = useState<CoolingRange[]>([
     { id: 1, minAmount: 0, maxAmount: 5000, days: 1 },
     { id: 2, minAmount: 5000, maxAmount: 20000, days: 3 },
     { id: 3, minAmount: 20000, maxAmount: null, days: 7 },
@@ -54,7 +51,7 @@ export function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
-  const defaultRules: CooldownRule[] = useMemo(
+  const defaultRanges: CoolingRange[] = useMemo(
     () => [
       { id: 1, minAmount: 0, maxAmount: 5000, days: 1 },
       { id: 2, minAmount: 5000, maxAmount: 20000, days: 3 },
@@ -73,33 +70,32 @@ export function ProfilePage() {
     if (!profile) return;
 
     setNickname(profile.nickname ?? "");
-    setAge(profile.age != null ? String(profile.age) : "");
     setMonthlyIncome(
       profile.monthlyIncome != null ? String(profile.monthlyIncome) : ""
     );
-    setMonthlyFreeBudget(
-      profile.monthlyFreeBudget != null ? String(profile.monthlyFreeBudget) : ""
+    setMonthlySavings(
+      profile.monthlySavings != null ? String(profile.monthlySavings) : ""
     );
     setCurrentSavings(
       profile.currentSavings != null ? String(profile.currentSavings) : ""
     );
     setUseSavings(profile.useSavings);
-    setNotificationChannel(profile.notificationChannel);
-    setNotificationFrequency(profile.notificationFrequency);
+    setNotifyChannel(profile.notifyChannel);
+    setNotifyFrequency(profile.notifyFrequency);
 
-    const mappedRules: CooldownRule[] =
-      profile.cooldownRules.length > 0
-        ? profile.cooldownRules.map((rule: ProfileRule, idx) => ({
+    const mappedRules: CoolingRange[] =
+      profile.coolingRanges.length > 0
+        ? profile.coolingRanges.map((rule: ProfileRule, idx) => ({
             id: idx + 1,
             minAmount: rule.min_amount,
             maxAmount: rule.max_amount,
             days: rule.days,
           }))
-        : defaultRules;
+        : defaultRanges;
 
-    setCooldownRules(mappedRules);
+    setCoolingRanges(mappedRules);
     setBlacklist(profile.blacklist);
-  }, [defaultRules, profile]);
+  }, [defaultRanges, profile]);
 
   const parseNumber = (value: string) => {
     const trimmed = value.trim();
@@ -109,7 +105,7 @@ export function ProfilePage() {
   };
 
   const handleAddRule = () => {
-    setCooldownRules((prev) => [
+    setCoolingRanges((prev) => [
       ...prev,
       {
         id: Date.now(),
@@ -122,10 +118,10 @@ export function ProfilePage() {
 
   const handleRuleChange = (
     id: number,
-    field: keyof Omit<CooldownRule, "id">,
+    field: keyof Omit<CoolingRange, "id">,
     value: string
   ) => {
-    setCooldownRules((prev) =>
+    setCoolingRanges((prev) =>
       prev.map((rule) => {
         if (rule.id !== id) return rule;
         if (field === "maxAmount") {
@@ -146,7 +142,7 @@ export function ProfilePage() {
   };
 
   const handleRemoveRule = (id: number) => {
-    setCooldownRules((prev) => prev.filter((r) => r.id !== id));
+    setCoolingRanges((prev) => prev.filter((r) => r.id !== id));
   };
 
   const handleAddBlacklistItem = () => {
@@ -175,14 +171,13 @@ export function ProfilePage() {
 
     const payload = {
       nickname: nickname.trim(),
-      age: parseNumber(age),
       monthly_income: parseNumber(monthlyIncome),
-      monthly_free_budget: parseNumber(monthlyFreeBudget),
+      monthly_savings: parseNumber(monthlySavings),
       current_savings: parseNumber(currentSavings),
       use_savings: useSavings,
-      notification_channel: notificationChannel,
-      notification_frequency: notificationFrequency,
-      cooldown_rules: cooldownRules.map((r) => ({
+      notify_channel: notifyChannel,
+      notify_frequency: notifyFrequency,
+      cooling_ranges: coolingRanges.map((r) => ({
         min_amount: r.minAmount,
         max_amount: r.maxAmount,
         days: r.days,
@@ -233,22 +228,13 @@ export function ProfilePage() {
             О тебе
           </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 12 }}>
               <TextField
                 fullWidth
                 label="Никнейм"
                 placeholder="Как к тебе обращаться"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
-                label="Возраст"
-                type="number"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
               />
             </Grid>
           </Grid>
@@ -272,10 +258,10 @@ export function ProfilePage() {
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
-                label="Бюджет на хотелки, ₽ / мес"
+                label="Сбережения в месяц, ₽"
                 type="number"
-                value={monthlyFreeBudget}
-                onChange={(e) => setMonthlyFreeBudget(e.target.value)}
+                value={monthlySavings}
+                onChange={(e) => setMonthlySavings(e.target.value)}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -332,7 +318,7 @@ export function ProfilePage() {
               <Grid size={{ xs: 12, md: 3 }} />
             </Grid>
 
-            {cooldownRules.map((rule) => (
+            {coolingRanges.map((rule) => (
               <Grid key={rule.id} container spacing={1} alignItems="center">
                 <Grid size={{ xs: 12, md: 3 }}>
                   <TextField
@@ -450,9 +436,9 @@ export function ProfilePage() {
                 <TextField
                   select
                   label="Канал"
-                  value={notificationChannel}
+                  value={notifyChannel}
                   onChange={(e) =>
-                    setNotificationChannel(e.target.value as "none" | "email")
+                    setNotifyChannel(e.target.value as "none" | "email")
                   }
                   fullWidth
                 >
@@ -463,9 +449,9 @@ export function ProfilePage() {
                 <TextField
                   select
                   label="Частота"
-                  value={notificationFrequency}
+                  value={notifyFrequency}
                   onChange={(e) =>
-                    setNotificationFrequency(
+                    setNotifyFrequency(
                       e.target.value as "daily" | "weekly" | "monthly"
                     )
                   }

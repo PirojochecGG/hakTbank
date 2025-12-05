@@ -21,29 +21,27 @@ export type ProfileRule = {
   days: number;
 };
 
-export type ProfileResponse = {
-  nickname?: string;
-  age?: number | null;
+export type UserProfileResponse = {
+  nickname?: string | null;
   monthly_income?: number | null;
-  monthly_free_budget?: number | null;
+  monthly_savings?: number | null;
   current_savings?: number | null;
   use_savings?: boolean;
-  notification_channel?: "none" | "email";
-  notification_frequency?: "daily" | "weekly" | "monthly";
-  cooldown_rules?: ProfileRule[];
+  notify_channel?: "none" | "email";
+  notify_frequency?: "daily" | "weekly" | "monthly";
+  cooling_ranges?: ProfileRule[];
   blacklist_categories?: string[];
 };
 
 export type ProfileData = {
   nickname: string;
-  age: number | null;
   monthlyIncome: number | null;
-  monthlyFreeBudget: number | null;
+  monthlySavings: number | null;
   currentSavings: number | null;
   useSavings: boolean;
-  notificationChannel: "none" | "email";
-  notificationFrequency: "daily" | "weekly" | "monthly";
-  cooldownRules: ProfileRule[];
+  notifyChannel: "none" | "email";
+  notifyFrequency: "daily" | "weekly" | "monthly";
+  coolingRanges: ProfileRule[];
   blacklist: string[];
 };
 
@@ -64,16 +62,15 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const normalizeProfile = (data: ProfileResponse): ProfileData => ({
+const normalizeProfile = (data: UserProfileResponse): ProfileData => ({
   nickname: data.nickname ?? "",
-  age: data.age ?? null,
   monthlyIncome: data.monthly_income ?? null,
-  monthlyFreeBudget: data.monthly_free_budget ?? null,
+  monthlySavings: data.monthly_savings ?? null,
   currentSavings: data.current_savings ?? null,
   useSavings: data.use_savings ?? true,
-  notificationChannel: data.notification_channel ?? "none",
-  notificationFrequency: data.notification_frequency ?? "weekly",
-  cooldownRules: data.cooldown_rules ?? [],
+  notifyChannel: data.notify_channel ?? "none",
+  notifyFrequency: data.notify_frequency ?? "weekly",
+  coolingRanges: data.cooling_ranges ?? [],
   blacklist: data.blacklist_categories ?? [],
 });
 
@@ -86,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async () => {
     if (!token) return null;
     try {
-      const data = await apiFetch<ProfileResponse>("/user/profile", {
+      const data = await apiFetch<UserProfileResponse>("/v1/user/profile", {
         method: "GET",
       });
       const normalized = normalizeProfile(data);
