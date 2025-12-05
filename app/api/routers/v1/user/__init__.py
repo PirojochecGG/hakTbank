@@ -13,7 +13,9 @@ async def get_profile(user: CurrentUser):
     return await UserRouterManager.get_profile(user)
 
 
-@router.patch("/profile", response_model=UserProfileResponse)
-async def update_profile(request: UpdateProfileRequest, user: CurrentUser, db: DBSession):
+@router.post("/profile", response_model=UserProfileResponse)
+async def update_profile(
+    request: UpdateProfileRequest, user: CurrentUser, db: DBSession
+):
     """Обновление профиля пользователя."""
     return await UserRouterManager.update_profile(user, request, db)
