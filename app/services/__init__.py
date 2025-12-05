@@ -3,6 +3,8 @@
 from loguru import logger
 from typing import Dict, Any
 
+from app.services.srv_sub import SubService
+from app.services.srv_sub import SubManager
 from app.services.srv_auth import AuthService
 from app.services.srv_auth import AuthManager
 from app.services.srv_chat import ChatService
@@ -31,6 +33,7 @@ class ServiceContainer:
             return
 
         logger.info("Инициализация сервисов...")
+        self.register("sub", SubService(SubManager()))
         self.register("auth", AuthService(AuthManager()))
         self.register("chat", ChatService(ChatManager()))
         self.register("redis", RedisService(RedisManager()))
@@ -67,6 +70,10 @@ class Services:
     @property
     def redis(self) -> "RedisService":
         return container.get("redis")
+
+    @property
+    def sub(self) -> "SubService":
+        return container.get("sub")
 
 
 get_service = Services()

@@ -1,8 +1,9 @@
+# fmt: off
 from uuid import UUID
 from typing import Optional
-from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timedelta, timezone
 
 from app.storage.models import Purchase, User
 from app.storage.enums import PurchaseStatus
@@ -163,3 +164,21 @@ class PurchaseManager:
             available_date=available_date,
             recommendation=recommendation
         )
+
+    @staticmethod
+    async def delete_purchase(db: AsyncSession, chat_id: UUID, purchase_id: UUID, user_id: UUID) -> bool:
+        """Удаляет покупку из чата."""
+        if not (purchase := await db.scalar(
+            select(Purchase).where(
+                and_(
+                    Purchase.id == purchase_id,
+                    Purchase.chat_id == chat_id,
+                    Purchase.user_id == user_id
+                )
+            )
+        )):
+            return False
+
+        await db.delete(purchase)
+        await db.flush()
+        return True

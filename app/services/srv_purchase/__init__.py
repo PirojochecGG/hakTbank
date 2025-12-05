@@ -38,3 +38,7 @@ class PurchaseService:
     def calculate_cooling(self, user: User, price: int, category: str) -> CoolingAnalysis:
         """Рассчитывает период охлаждения покупки."""
         return self._manager.calculate_cooling(user, price, category)
+
+    async def delete_purchase(self, db: AsyncSession, chat_id: UUID, purchase_id: UUID, user_id: UUID) -> bool:
+        """Удаляет покупку из чата."""
+        return await self._manager.delete_purchase(db, chat_id, purchase_id, user_id)

@@ -52,3 +52,16 @@ async def analyze_purchase(
 ) -> AnalyzePurchaseResponse:
     """Анализирует покупку без сохранения."""
     return PurchasesRouterManager.analyze_purchase(user, request)
+
+
+@router.delete("/chat/{chat_id}/{purchase_id}", status_code=204)
+async def delete_purchase(
+    chat_id: UUID,
+    purchase_id: UUID,
+    user: CurrentUser,
+    db: DBSession
+) -> None:
+    """Удаляет покупку из чата."""
+    if not await PurchasesRouterManager.delete_purchase(user, db, chat_id, purchase_id):
+        raise HTTPException(404, "Покупка не найдена")
+    return None

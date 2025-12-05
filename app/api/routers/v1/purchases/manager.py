@@ -127,3 +127,12 @@ class PurchasesRouterManager:
             available_date=analysis.available_date,
             recommendation=analysis.recommendation
         )
+
+    @staticmethod
+    async def delete_purchase(user: User, db: AsyncSession, chat_id: UUID, purchase_id: UUID) -> bool:
+        """Удаляет покупку из чата."""
+        if await get_service.purchase.delete_purchase(db, chat_id, purchase_id, user.id):
+            await db.commit()
+            logger.info(f"🗑️ Deleted purchase {purchase_id} from chat {chat_id} for user {user.id}")
+            return True
+        return False
