@@ -1,5 +1,5 @@
 # fmt: off
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 from typing import Optional, Literal
 
 
@@ -16,23 +16,19 @@ class UserProfileResponse(BaseModel):
     notify_channel: str
 
 
+class CoolingRange(BaseModel):
+    """Диапазон охлаждения."""
+    min_amount: int = Field(ge=0)
+    max_amount: int = Field(ge=0)
+    days: int = Field(ge=0)
+
+
 class UpdateProfileRequest(BaseModel):
     """Обновление профиля."""
     monthly_savings: Optional[int] = Field(None, ge=0, description="Сумма откладываемая в месяц (рубли)")
     monthly_salary: Optional[int] = Field(None, ge=0, description="Месячная зарплата (рубли)")
     current_savings: Optional[int] = Field(None, ge=0, description="Текущие накопления (рубли)")
     blacklist: Optional[list[str]] = Field(None, max_length=100, description="Запрещенные категории")
-    cooling_ranges: Optional[dict[int, int]] = Field(None, description="Диапазоны охлаждения {price: days}")
+    cooling_ranges: Optional[list[CoolingRange]] = Field(None, description="Диапазоны охлаждения")
     notify_frequency: Optional[Literal["daily", "weekly", "monthly"]] = None
     notify_channel: Optional[Literal["app", "email", "tg"]] = None
-
-    @field_validator("cooling_ranges")
-    @classmethod
-    def validate_cooling_ranges(cls, v):
-        if v is not None:
-            for price, days in v.items():
-                if not isinstance(price, int) or price < 0:
-                    raise ValueError("Цена должна быть положительным числом")
-                if not isinstance(days, int) or days < 0:
-                    raise ValueError("Количество дней должно быть положительным числом")
-        return v

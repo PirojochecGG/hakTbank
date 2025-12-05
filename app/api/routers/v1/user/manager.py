@@ -20,11 +20,13 @@ class UserRouterManager:
             blacklist=user.blacklist,
             cooling_ranges=user.cooling_ranges,
             notify_frequency=user.notify_frequency,
-            notify_channel=user.notify_channel
+            notify_channel=user.notify_channel,
         )
 
     @staticmethod
-    async def update_profile(user: User, request: UpdateProfileRequest, db: AsyncSession) -> UserProfileResponse:
+    async def update_profile(
+        user: User, request: UpdateProfileRequest, db: AsyncSession
+    ) -> UserProfileResponse:
         """Обновление профиля пользователя."""
         if request.monthly_savings is not None:
             user.monthly_savings = request.monthly_savings
@@ -34,14 +36,14 @@ class UserRouterManager:
             user.current_savings = request.current_savings
         if request.blacklist is not None:
             user.blacklist = request.blacklist
-        if request.cooling_ranges is not None:
-            user.cooling_ranges = request.cooling_ranges
         if request.notify_frequency is not None:
             user.notify_frequency = request.notify_frequency
         if request.notify_channel is not None:
             user.notify_channel = request.notify_channel
+        if request.cooling_ranges is not None:
+            user.cooling_ranges = {r.min_amount: r.days for r in request.cooling_ranges}
 
         await db.commit()
         await db.refresh(user)
-        
+
         return await UserRouterManager.get_profile(user)
