@@ -8,6 +8,7 @@ import {
   Stack,
 } from "@mui/material";
 import { apiFetch } from "../api";
+import { getStoredChatId, setStoredChatId } from "../utils/chatStorage";
 
 type ApiChatMessage = {
   id?: string | number;
@@ -94,6 +95,14 @@ export function ChatPage() {
     const initializeChat = async () => {
       setIsLoading(true);
       try {
+        const storedChatId = getStoredChatId();
+
+        if (storedChatId) {
+          setChatId(storedChatId);
+          await fetchMessages(storedChatId);
+          return;
+        }
+
         const chat = await apiFetch<ChatWithMessagesResponse>("/chats/new", {
           method: "POST",
         });
@@ -102,6 +111,7 @@ export function ChatPage() {
         setChatId(newChatId);
 
         if (newChatId) {
+          setStoredChatId(newChatId);
           await fetchMessages(newChatId);
         }
       } catch (error) {

@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { apiFetch, getAccessToken, setAccessToken } from "../api";
+import { clearStoredChatId } from "../utils/chatStorage";
 
 type AuthUser = {
   id?: string | number;
@@ -148,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(data.user ?? null);
       await refreshProfile();
     },
-    [refreshProfile],
+    [refreshProfile]
   );
 
   const register = useCallback(
@@ -173,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setUser(null);
     setProfile(null);
+    clearStoredChatId();
   }, []);
 
   const value = useMemo(
