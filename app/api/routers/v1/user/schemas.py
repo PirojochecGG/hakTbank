@@ -18,9 +18,9 @@ class UserProfileResponse(BaseModel):
 
 class UpdateProfileRequest(BaseModel):
     """Обновление профиля."""
-    monthly_savings: Optional[int] = Field(None, ge=0, description="Сумма откладываемая в месяц (копейки)")
-    monthly_salary: Optional[int] = Field(None, ge=0, description="Месячная зарплата (копейки)")
-    current_savings: Optional[int] = Field(None, ge=0, description="Текущие накопления (копейки)")
+    monthly_savings: Optional[int] = Field(None, ge=0, description="Сумма откладываемая в месяц (рубли)")
+    monthly_salary: Optional[int] = Field(None, ge=0, description="Месячная зарплата (рубли)")
+    current_savings: Optional[int] = Field(None, ge=0, description="Текущие накопления (рубли)")
     blacklist: Optional[list[str]] = Field(None, max_length=100, description="Запрещенные категории")
     cooling_ranges: Optional[dict[int, int]] = Field(None, description="Диапазоны охлаждения {price: days}")
     notify_frequency: Optional[Literal["daily", "weekly", "monthly"]] = None

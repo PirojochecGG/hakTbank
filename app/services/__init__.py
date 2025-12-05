@@ -3,10 +3,12 @@
 from loguru import logger
 from typing import Dict, Any
 
-from app.services.srv_auth  import AuthService
-from app.services.srv_auth.manager  import AuthManager
+from app.services.srv_auth import AuthService
+from app.services.srv_auth.manager import AuthManager
 from app.services.srv_chat import ChatService
-from app.services.srv_chat import ChatManager
+from app.services.srv_chat.manager import ChatManager
+from app.services.srv_purchase import PurchaseService
+from app.services.srv_purchase.manager import PurchaseManager
 
 
 class ServiceContainer:
@@ -29,6 +31,7 @@ class ServiceContainer:
         logger.info("Инициализация сервисов...")
         self.register("auth", AuthService(AuthManager()))
         self.register("chat", ChatService(ChatManager()))
+        self.register("purchase", PurchaseService(PurchaseManager()))
 
         self._initialized = True
         logger.info("✅ Сервисы инициализированы")
@@ -53,6 +56,10 @@ class Services:
     @property
     def chat(self) -> "ChatService":
         return container.get("chat")
+
+    @property
+    def purchase(self) -> "PurchaseService":
+        return container.get("purchase")
 
 
 get_service = Services()
