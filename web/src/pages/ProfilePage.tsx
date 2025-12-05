@@ -252,7 +252,13 @@ export function ProfilePage() {
                 label="Доход в месяц, ₽"
                 type="number"
                 value={monthlyIncome}
-                onChange={(e) => setMonthlyIncome(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "" || Number(val) >= 0) {
+                    setMonthlyIncome(val);
+                  }
+                }}
+                inputProps={{ min: "0" }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -261,7 +267,13 @@ export function ProfilePage() {
                 label="Сбережения в месяц, ₽"
                 type="number"
                 value={monthlySavings}
-                onChange={(e) => setMonthlySavings(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "" || Number(val) >= 0) {
+                    setMonthlySavings(val);
+                  }
+                }}
+                inputProps={{ min: "0" }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -270,7 +282,13 @@ export function ProfilePage() {
                 label="Текущие накопления, ₽"
                 type="number"
                 value={currentSavings}
-                onChange={(e) => setCurrentSavings(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "" || Number(val) >= 0) {
+                    setCurrentSavings(val);
+                  }
+                }}
+                inputProps={{ min: "0" }}
               />
             </Grid>
           </Grid>
@@ -326,9 +344,13 @@ export function ProfilePage() {
                     type="number"
                     size="small"
                     value={rule.minAmount}
-                    onChange={(e) =>
-                      handleRuleChange(rule.id, "minAmount", e.target.value)
-                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "" || Number(val) >= 0) {
+                        handleRuleChange(rule.id, "minAmount", val);
+                      }
+                    }}
+                    inputProps={{ min: "0" }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
@@ -338,9 +360,13 @@ export function ProfilePage() {
                     size="small"
                     placeholder="∞"
                     value={rule.maxAmount ?? ""}
-                    onChange={(e) =>
-                      handleRuleChange(rule.id, "maxAmount", e.target.value)
-                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "" || Number(val) >= 0) {
+                        handleRuleChange(rule.id, "maxAmount", val);
+                      }
+                    }}
+                    inputProps={{ min: "0" }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
@@ -349,9 +375,13 @@ export function ProfilePage() {
                     type="number"
                     size="small"
                     value={rule.days}
-                    onChange={(e) =>
-                      handleRuleChange(rule.id, "days", e.target.value)
-                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "" || Number(val) >= 0) {
+                        handleRuleChange(rule.id, "days", val);
+                      }
+                    }}
+                    inputProps={{ min: "0" }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
