@@ -19,3 +19,4 @@ web-build/
 app.local.json
 .env
 .env.local
+endpoints.json
