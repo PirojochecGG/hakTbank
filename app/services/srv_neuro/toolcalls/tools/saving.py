@@ -41,6 +41,7 @@ class UpdateSavingsTool(BaseTool):
 
                 old_amount = user.current_savings
                 user.current_savings = amount
+                await db.flush()
                 await db.commit()
 
                 return {

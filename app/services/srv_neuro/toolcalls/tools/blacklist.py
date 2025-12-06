@@ -1,8 +1,9 @@
 # fmt: off
 # isort: off
 from uuid import UUID
-from typing import Any, Dict
 from loguru import logger
+from typing import Any, Dict
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.storage import get_session, User
 from .. import BaseTool
@@ -44,6 +45,7 @@ class AddToBlacklistTool(BaseTool):
                     }
 
                 user.blacklist.append(category)
+                flag_modified(user, 'blacklist')
                 await db.commit()
 
                 return {
