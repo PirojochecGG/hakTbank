@@ -182,7 +182,7 @@ export function ProfilePage() {
 
     setIsSaving(true)
     try {
-      await apiFetch('/user/profile', {
+      await apiFetch('/v1/user/profile', {
         method: 'POST',
         body: JSON.stringify(payload),
       })

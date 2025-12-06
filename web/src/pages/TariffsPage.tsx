@@ -140,7 +140,7 @@ export function TariffsPage() {
       setFetchState('loading')
       setError(null)
       try {
-        const response = await apiFetch<TariffsResponse>('/payment/tariffs')
+        const response = await apiFetch<TariffsResponse>('/v1/payment/tariffs')
         setTariffs(normalizeTariffs(response))
         setCanPurchase(response.can_purchase ?? response.is_available ?? response.available ?? true)
         setDisabledReason(response.disabled_reason ?? response.reason)
@@ -160,7 +160,7 @@ export function TariffsPage() {
     setPurchaseError(null)
     setIsPurchasing(tariff.id)
     try {
-      const payment = await apiFetch<PaymentResponse>('/payment/yookassa/create', {
+      const payment = await apiFetch<PaymentResponse>('/v1/payment/yookassa/create', {
         method: 'POST',
         body: JSON.stringify({ tariff_id: tariff.id }),
       })

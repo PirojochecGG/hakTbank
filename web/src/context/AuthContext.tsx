@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async () => {
     if (!token) return null
     try {
-      const data = await apiFetch<UserProfileResponse>('/user/profile', {
+      const data = await apiFetch<UserProfileResponse>('/v1/user/profile', {
         method: 'GET',
       })
       const normalized = normalizeProfile(data)
@@ -122,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await apiFetch<{
         access_token: string
         user?: AuthUser
-      }>('/auth/login', {
+      }>('/v1/auth/login', {
         method: 'POST',
         body: JSON.stringify(payload),
       })
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await apiFetch<{
         access_token: string
         user?: AuthUser
-      }>('/auth/register', {
+      }>('/v1/auth/register', {
         method: 'POST',
         body: JSON.stringify(payload),
       })

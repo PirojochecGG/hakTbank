@@ -60,6 +60,8 @@ export function Layout({ children }: LayoutProps) {
         component="main"
         sx={{
           flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
           minHeight: '100vh',
           pb: { xs: isAuthPage ? 0 : 0, md: 0 },
           p: { xs: 2, md: 3 },

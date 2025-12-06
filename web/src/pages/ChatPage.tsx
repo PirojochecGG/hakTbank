@@ -1,4 +1,4 @@
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import {
   Box,
@@ -15,8 +15,63 @@ import {
   Typography,
 } from '@mui/material'
 
-import { apiFetch } from '../api/api'
+import { apiFetch, getAccessToken } from '../api/api'
 import { clearStoredChatId, getStoredChatId, setStoredChatId } from '../utils/chatStorage'
+
+// Функция для парсинга markdown формата **text** в JSX
+const parseMarkdownBold = (text: string) => {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>
+    }
+    return <span key={index}>{part}</span>
+  })
+}
+
+// Функция для парсинга SSE (Server-Sent Events) формата
+const parseSSEMessage = (line: string): string => {
+  // Формат: "data: {...}" или просто "data: text"
+  if (line.startsWith('data: ')) {
+    const data = line.slice(6) // Удаляем "data: "
+
+    // Пытаемся парсить как JSON
+    try {
+      const parsed = JSON.parse(data)
+      // Если это объект с полем content или text, извлекаем его
+      if (typeof parsed === 'object' && parsed !== null) {
+        return parsed.content || parsed.text || parsed.message || ''
+      }
+      // Если это строка в JSON формате
+      if (typeof parsed === 'string') {
+        return parsed
+      }
+    } catch {
+      // Не JSON, просто возвращаем как текст
+      return data
+    }
+  }
+
+  return ''
+}
+
+// Функция для форматирования ответа в понятный вид
+const formatUserFriendlyResponse = (content: string): string => {
+  let formatted = content
+
+  // Удаляем дублирующиеся пробелы
+  formatted = formatted.replace(/  +/g, ' ')
+
+  // Удаляем лишние переводы строк в начале/конце
+  formatted = formatted.trim()
+
+  // Если ответ слишком короткий и выглядит как служебное сообщение, обрезаем
+  if (formatted.length < 10 && !formatted.match(/[а-яА-ЯёЁa-zA-Z0-9]/)) {
+    return ''
+  }
+
+  return formatted
+}
 
 type ApiChatMessage = {
   id?: string | number
@@ -44,6 +99,8 @@ type ChatResponse = {
   chat_id?: string
   messages?: ApiChatMessage[]
   message?: ApiChatMessage
+  role?: 'user' | 'assistant'
+  content?: string
 }
 
 type ChatMessage = {
@@ -112,12 +169,22 @@ export function ChatPage() {
   const [chatPage, setChatPage] = useState(1)
   const [hasMoreChats, setHasMoreChats] = useState(false)
 
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
   const PAGE_SIZE = 10
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   const fetchChatList = useCallback(async (page = 1) => {
     const fetchWithQuery = async (query: URLSearchParams) => {
       const response = await apiFetch<ChatListResponse | ChatListItem[]>(
-        `/chats?${query.toString()}`,
+        `/v1/chats?${query.toString()}`,
       )
 
       const items = Array.isArray(response) ? response : (response.items ?? response.data ?? [])
@@ -173,11 +240,17 @@ export function ChatPage() {
   const fetchMessages = useCallback(async (currentChatId: string) => {
     try {
       const chatWithMessages = await apiFetch<ChatWithMessagesResponse>(
-        `/chats/${currentChatId}/messages`,
+        `/v1/chats/${currentChatId}/messages`,
       )
       const normalized = normalizeMessages(chatWithMessages.messages)
 
-      setMessages(normalized.length ? normalized : [defaultAssistantMessage])
+      // Очищаем и форматируем сообщения из истории
+      const formattedMessages = normalized.map((msg) => ({
+        ...msg,
+        text: formatUserFriendlyResponse(msg.text),
+      }))
+
+      setMessages(formattedMessages.length ? formattedMessages : [defaultAssistantMessage])
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Не удалось загрузить историю сообщений.'
@@ -198,7 +271,7 @@ export function ChatPage() {
   }, [])
 
   const createAndSelectChat = useCallback(async () => {
-    const chat = await apiFetch<ChatWithMessagesResponse>('/chats/new', {
+    const chat = await apiFetch<ChatWithMessagesResponse>('/v1/chats/new', {
       method: 'POST',
       body: JSON.stringify({}),
     })
@@ -269,6 +342,96 @@ export function ChatPage() {
     void initializeChat()
   }, [createAndSelectChat, fetchChatList, fetchMessages])
 
+  const handleStreamingMessage = async (
+    text: string,
+    chatIdValue: string,
+    assistantMessageId: string,
+  ) => {
+    try {
+      const chatRequest: ChatRequest = { text, chat_id: chatIdValue, stream: true }
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/v1/message/new`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getAccessToken()}`,
+        },
+        body: JSON.stringify(chatRequest),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      if (!response.body) {
+        throw new Error('No response body')
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let streamedContent = ''
+      let buffer = ''
+
+      let finished = false
+      while (!finished) {
+        const { done, value } = await reader.read()
+        if (done) {
+          finished = true
+          // Обрабатываем последнюю строку в буфере
+          if (buffer.trim()) {
+            const parsed = parseSSEMessage(buffer)
+            if (parsed) {
+              streamedContent += parsed
+            }
+          }
+          break
+        }
+
+        const chunk = decoder.decode(value, { stream: true })
+        buffer += chunk
+
+        // Обрабатываем построчно
+        const lines = buffer.split('\n')
+
+        // Последняя строка может быть неполная, оставляем её в буфере
+        buffer = lines[lines.length - 1] || ''
+
+        for (let i = 0; i < lines.length - 1; i++) {
+          const line = lines[i]?.trim()
+          if (line) {
+            const parsed = parseSSEMessage(line)
+            if (parsed) {
+              streamedContent += parsed
+            }
+          }
+        }
+
+        // Очищаем и форматируем контент перед выводом
+        const formattedContent = formatUserFriendlyResponse(streamedContent)
+
+        // Обновляем сообщение ассистента в реальном времени
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessageId ? { ...msg, text: formattedContent } : msg,
+          ),
+        )
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка при потоковой передаче.'
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMessageId
+            ? {
+                ...msg,
+                text: `Ошибка: ${errorMessage}. Спроси у тиммейта по бэкенду, жив ли API.`,
+              }
+            : msg,
+        ),
+      )
+    }
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     const trimmed = input.trim()
@@ -280,48 +443,88 @@ export function ChatPage() {
       text: trimmed,
     }
 
-    setMessages((prev) => [...prev, userMessage])
+    const assistantMessageId = crypto.randomUUID()
+    const assistantMessage: ChatMessage = {
+      id: assistantMessageId,
+      role: 'assistant',
+      text: '',
+    }
+
+    setMessages((prev) => [...prev, userMessage, assistantMessage])
     setInput('')
     setIsSending(true)
 
     try {
-      const chatRequest: ChatRequest = { text: trimmed, chat_id: chatId }
-
-      const response = await apiFetch<ChatResponse>('/message/new', {
-        method: 'POST',
-        body: JSON.stringify(chatRequest),
-      })
-
-      const responseMessages = normalizeMessages(
-        response.messages ?? (response.message ? [response.message] : undefined),
-      )
-
-      if (responseMessages.length) {
-        setMessages((prev) => {
-          const existingIds = new Set(prev.map((message) => message.id))
-          const uniqueNewMessages = responseMessages.filter(
-            (message) => !existingIds.has(message.id),
-          )
-          return uniqueNewMessages.length ? [...prev, ...uniqueNewMessages] : prev
-        })
-      } else {
-        await fetchMessages(chatId)
-      }
+      // Пытаемся потоковую передачу
+      await handleStreamingMessage(trimmed, chatId, assistantMessageId)
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Не удалось связаться с сервером.'
-      const errorCode = (error as { code?: string }).code
+      console.error('Streaming failed, falling back to regular request', error)
 
-      const feedbackMessage = errorCode
-        ? `${errorMessage} (код ошибки: ${errorCode})`
-        : errorMessage
+      // Fallback: обычный запрос без потокования
+      try {
+        const chatRequest: ChatRequest = { text: trimmed, chat_id: chatId }
 
-      const fallback: ChatMessage = {
-        id: String(Date.now()),
-        role: 'assistant',
-        text: `${feedbackMessage}. Спроси у тиммейта по бэкенду, жив ли API.`,
+        const response = await apiFetch<ChatResponse>('/v1/message/new', {
+          method: 'POST',
+          body: JSON.stringify(chatRequest),
+        })
+
+        // Обработка ответа: может быть messages[] или message объект или весь ответ это сообщение
+        let messagesToAdd: ApiChatMessage[] = []
+
+        if (response.messages && Array.isArray(response.messages)) {
+          messagesToAdd = response.messages
+        } else if (response.message) {
+          messagesToAdd = [response.message]
+        } else if (response.role && response.content) {
+          // Весь ответ это сообщение ассистента
+          messagesToAdd = [response as ApiChatMessage]
+        }
+
+        const responseMessages = normalizeMessages(messagesToAdd)
+
+        if (responseMessages.length) {
+          // Очищаем и форматируем каждое сообщение перед выводом
+          const formattedMessages = responseMessages.map((msg) => ({
+            ...msg,
+            text: formatUserFriendlyResponse(msg.text),
+          }))
+
+          setMessages((prev) => {
+            const existingIds = new Set(prev.map((message) => message.id))
+            const uniqueNewMessages = formattedMessages.filter(
+              (message) => !existingIds.has(message.id),
+            )
+            return uniqueNewMessages.length
+              ? prev.filter((msg) => msg.id !== assistantMessageId).concat(uniqueNewMessages)
+              : prev
+          })
+        } else {
+          // Если нет сообщений в ответе, загружаем всю историю
+          await fetchMessages(chatId)
+        }
+      } catch (fallbackError) {
+        const errorMessage =
+          fallbackError instanceof Error
+            ? fallbackError.message
+            : 'Не удалось связаться с сервером.'
+        const errorCode = (fallbackError as { code?: string }).code
+
+        const feedbackMessage = errorCode
+          ? `${errorMessage} (код ошибки: ${errorCode})`
+          : errorMessage
+
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessageId
+              ? {
+                  ...msg,
+                  text: `${feedbackMessage}. Спроси у тиммейта по бэкенду, жив ли API.`,
+                }
+              : msg,
+          ),
+        )
       }
-      setMessages((prev) => [...prev, fallback])
     } finally {
       setIsSending(false)
     }
@@ -364,7 +567,7 @@ export function ChatPage() {
 
     setIsLoading(true)
     try {
-      await apiFetch(`/chats/${chatId}`, {
+      await apiFetch(`/v1/chats/${chatId}`, {
         method: 'DELETE',
         skipJsonParsing: true,
       })
@@ -412,201 +615,211 @@ export function ChatPage() {
   )
 
   return (
-    <Box>
-      <Stack spacing={2}>
-        <Box>
-          <Typography variant="h4" gutterBottom>
-            Охладить трахание
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Опиши покупку или ситуацию, а ассистент подскажет, стоит ли ждать и до какой даты
-            покупка будет комфортной.
-          </Typography>
-        </Box>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+      }}
+    >
+      <Box>
+        <Typography variant="h4" gutterBottom>
+          Охладить трахание
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Опиши покупку или ситуацию, а ассистент подскажет, стоит ли ждать и до какой даты покупка
+          будет комфортной.
+        </Typography>
+      </Box>
 
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-          <Paper
-            sx={{
-              p: 2,
-              width: { xs: '100%', md: 300 },
-              flexShrink: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}
-          >
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="h6" component="div" sx={{ flex: 1 }}>
-                Ваши чаты
-              </Typography>
-              <IconButton
-                aria-label="Обновить"
-                size="small"
-                onClick={() => void fetchChatList(chatPage)}
-                disabled={isLoadingChats}
-              >
-                <RefreshIcon fontSize="small" />
-              </IconButton>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => void handleCreateChat()}
-                disabled={isLoading || isSending}
-              >
-                Новый чат
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                size="small"
-                onClick={() => void handleDeleteChat()}
-                disabled={!chatId || isLoading || isSending}
-              >
-                Удалить чат
-              </Button>
-            </Stack>
-
-            <Divider />
-
-            <Box sx={{ flex: 1, overflowY: 'auto' }}>
-              {isLoadingChats ? (
-                <Stack alignItems="center" spacing={1}>
-                  <CircularProgress size={24} />
-                  <Typography variant="body2" color="text.secondary">
-                    Загружаем чаты...
-                  </Typography>
-                </Stack>
-              ) : (
-                <List dense>
-                  {chatListTitle.map((chat) => (
-                    <ListItemButton
-                      key={chat.id}
-                      selected={chat.chat_id === chatId}
-                      onClick={() => void handleSelectChat(chat.chat_id)}
-                    >
-                      <ListItemText
-                        primary={chat.title}
-                        secondary={
-                          chat.updated_at ? new Date(chat.updated_at).toLocaleString() : undefined
-                        }
-                      />
-                    </ListItemButton>
-                  ))}
-                  {!chatListTitle.length && (
-                    <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
-                      Чатов пока нет. Создайте новый!
-                    </Typography>
-                  )}
-                </List>
-              )}
-            </Box>
-
-            <Stack direction="row" spacing={1} justifyContent="space-between">
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => void fetchChatList(Math.max(1, chatPage - 1))}
-                disabled={isLoadingChats || chatPage <= 1}
-              >
-                Назад
-              </Button>
-              <Typography variant="caption" color="text.secondary">
-                Страница {chatPage}
-              </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => void fetchChatList(chatPage + 1)}
-                disabled={isLoadingChats || !hasMoreChats}
-              >
-                Вперед
-              </Button>
-            </Stack>
-          </Paper>
-
-          <Paper
-            sx={{
-              p: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              height: { xs: '70vh', md: '70vh' },
-              flex: 1,
-            }}
-          >
-            <Box
-              sx={{
-                flex: 1,
-                overflowY: 'auto',
-                mb: 2,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 1.5,
-              }}
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        spacing={2}
+        sx={{ minHeight: 'calc(100vh - 200px)' }}
+      >
+        <Paper
+          sx={{
+            p: 2,
+            width: { xs: '100%', md: 300 },
+            flexShrink: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            maxHeight: '85vh',
+            overflowY: 'auto',
+          }}
+        >
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography variant="h6" component="div" sx={{ flex: 1 }}>
+              Ваши чаты
+            </Typography>
+            <IconButton
+              aria-label="Обновить"
+              size="small"
+              onClick={() => void fetchChatList(chatPage)}
+              disabled={isLoadingChats}
             >
-              {messages.map((msg) => (
+              <RefreshIcon fontSize="small" />
+            </IconButton>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => void handleCreateChat()}
+              disabled={isLoading || isSending}
+            >
+              Новый чат
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              onClick={() => void handleDeleteChat()}
+              disabled={!chatId || isLoading || isSending}
+            >
+              Удалить чат
+            </Button>
+          </Stack>
+
+          <Divider />
+
+          <Box sx={{ flex: 1, overflowY: 'auto' }}>
+            {isLoadingChats ? (
+              <Stack alignItems="center" spacing={1}>
+                <CircularProgress size={24} />
+                <Typography variant="body2" color="text.secondary">
+                  Загружаем чаты...
+                </Typography>
+              </Stack>
+            ) : (
+              <List dense>
+                {chatListTitle.map((chat) => (
+                  <ListItemButton
+                    key={chat.id}
+                    selected={chat.chat_id === chatId}
+                    onClick={() => void handleSelectChat(chat.chat_id)}
+                  >
+                    <ListItemText
+                      primary={chat.title}
+                      secondary={
+                        chat.updated_at ? new Date(chat.updated_at).toLocaleString() : undefined
+                      }
+                    />
+                  </ListItemButton>
+                ))}
+                {!chatListTitle.length && (
+                  <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
+                    Чатов пока нет. Создайте новый!
+                  </Typography>
+                )}
+              </List>
+            )}
+          </Box>
+
+          <Stack direction="row" spacing={1} justifyContent="space-between">
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => void fetchChatList(Math.max(1, chatPage - 1))}
+              disabled={isLoadingChats || chatPage <= 1}
+            >
+              Назад
+            </Button>
+            <Typography variant="caption" color="text.secondary">
+              Страница {chatPage}
+            </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => void fetchChatList(chatPage + 1)}
+              disabled={isLoadingChats || !hasMoreChats}
+            >
+              Вперед
+            </Button>
+          </Stack>
+        </Paper>
+
+        <Paper
+          sx={{
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            maxHeight: '85vh',
+          }}
+        >
+          <Box
+            sx={{
+              flex: 1,
+              overflowY: 'auto',
+              mb: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+            }}
+          >
+            {messages.map((msg) => (
+              <Box
+                key={msg.id}
+                sx={{
+                  display: 'flex',
+                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                }}
+              >
                 <Box
-                  key={msg.id}
                   sx={{
-                    display: 'flex',
-                    justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                    maxWidth: '75%',
+                    bgcolor: msg.role === 'user' ? 'primary.main' : 'background.default',
+                    color: msg.role === 'user' ? '#000000' : 'text.primary',
+                    borderRadius: msg.role === 'user' ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
+                    p: 1.5,
                   }}
                 >
-                  <Box
+                  <Typography
+                    variant="caption"
                     sx={{
-                      maxWidth: '75%',
-                      bgcolor: msg.role === 'user' ? 'primary.main' : 'background.default',
-                      color: msg.role === 'user' ? '#000000' : 'text.primary',
-                      borderRadius:
-                        msg.role === 'user' ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
-                      p: 1.5,
+                      display: 'block',
+                      mb: 0.5,
+                      color: msg.role === 'user' ? 'rgba(0,0,0,0.6)' : 'text.secondary',
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        display: 'block',
-                        mb: 0.5,
-                        color: msg.role === 'user' ? 'rgba(0,0,0,0.6)' : 'text.secondary',
-                      }}
-                    >
-                      {msg.role === 'user' ? '' : 'Ассистент'}
-                    </Typography>
-                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                      {msg.text}
-                    </Typography>
-                  </Box>
+                    {msg.role === 'user' ? '' : 'Ассистент'}
+                  </Typography>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                    {parseMarkdownBold(msg.text)}
+                  </Typography>
                 </Box>
-              ))}
-            </Box>
+              </Box>
+            ))}
+            <div ref={messagesEndRef} />
+          </Box>
 
-            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: 1 }}>
-              <TextField
-                fullWidth
-                multiline
-                minRows={2}
-                maxRows={4}
-                placeholder="Опиши покупку или задай вопрос..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSubmit(e as unknown as FormEvent)
-                  }
-                }}
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={isSending || !input.trim() || isLoading || !chatId}
-                sx={{ alignSelf: 'flex-end', whiteSpace: 'nowrap' }}
-              >
-                {isSending ? 'Отправка...' : 'Отправить'}
-              </Button>
-            </Box>
-          </Paper>
-        </Stack>
+          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: 1 }}>
+            <TextField
+              fullWidth
+              multiline
+              minRows={2}
+              maxRows={4}
+              placeholder="Опиши покупку или задай вопрос..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSubmit(e as unknown as FormEvent)
+                }
+              }}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={isSending || !input.trim() || isLoading || !chatId}
+              sx={{ alignSelf: 'flex-end', whiteSpace: 'nowrap' }}
+            >
+              {isSending ? 'Отправка...' : 'Отправить'}
+            </Button>
+          </Box>
+        </Paper>
       </Stack>
     </Box>
   )
