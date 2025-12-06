@@ -18,6 +18,7 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
+import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -242,6 +243,28 @@ function DrawerContent({
               <ChatBubbleOutlineIcon />
             </ListItemIcon>
             <ListItemText primary="Чат с моделью" />
+          </ListItemButton>
+          <ListItemButton
+            component={NavLink}
+            to="/tariffs"
+            onClick={onNavigate}
+            sx={{
+              borderRadius: 2,
+              opacity: token ? 1 : 0.6,
+              pointerEvents: token ? "auto" : "none",
+              "&.active": {
+                bgcolor: "primary.main",
+                color: "#000000",
+                "& .MuiListItemIcon-root": {
+                  color: "#000000",
+                },
+              },
+            }}
+          >
+            <ListItemIcon sx={{ color: "text.secondary" }}>
+              <PaidOutlinedIcon />
+            </ListItemIcon>
+            <ListItemText primary="Тарифы" />
           </ListItemButton>
         </List>
       </Box>
