@@ -547,6 +547,12 @@ export function ChatPage() {
                 placeholder="Опиши покупку или задай вопрос..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSubmit(e as unknown as FormEvent)
+                  }
+                }}
               />
               <Button
                 type="submit"
