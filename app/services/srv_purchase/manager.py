@@ -17,7 +17,15 @@ class PurchaseManager:
     async def create_purchase(
         db: AsyncSession, user_id: UUID, chat_id: UUID, request: CreatePurchaseRequest
     ) -> PurchaseInfo:
-        """Создает новую покупку."""
+        """Создает новую покупку с автоматическим расчетом охлаждения."""
+        if not (user := await db.get(User, user_id)):
+            raise ValueError("Пользователь не найден")
+
+        # Базовый расчет (детерминированный)
+        analysis = PurchaseManager.calculate_cooling(
+            user, request.price, request.category
+        )
+
         db.add(purchase := Purchase(
             user_id=user_id,
             chat_id=chat_id,
@@ -25,7 +33,9 @@ class PurchaseManager:
             price=request.price,
             category=request.category,
             picture=request.picture,
-            url=request.url
+            url=request.url,
+            cooling_days=analysis.total_days,
+            available_date=analysis.available_date
         ))
         await db.flush()
 
@@ -139,13 +149,20 @@ class PurchaseManager:
 
         # Расчет дней накопления
         savings_days = 0
-        if user.monthly_savings > 0 and user.current_savings < price:
-            needed = price - user.current_savings
-            # Оставляем минимум половину накоплений после покупки
-            safe_amount = user.current_savings // 2
-            if safe_amount < price:
+        if user.monthly_savings > 0:
+
+            # Если текущих накоплений не хватает
+            if user.current_savings < price:
+                needed = price - user.current_savings
+                months = (needed + user.monthly_savings - 1) // user.monthly_savings
+                savings_days = months * 30
+
+            # Если хватает, но после покупки останется меньше половины
+            elif user.current_savings - price < user.current_savings // 2:
+                safe_amount = user.current_savings // 2
                 needed = price - safe_amount
-                savings_days = (needed * 30) // user.monthly_savings
+                months = (needed + user.monthly_savings - 1) // user.monthly_savings
+                savings_days = months * 30
 
         total_days = max(cooling_days, savings_days)
         available_date = datetime.now(timezone.utc) + timedelta(days=total_days) if total_days > 0 else None
@@ -155,7 +172,8 @@ class PurchaseManager:
         elif total_days <= 7:
             recommendation = f"⏳ Рекомендуем подождать {total_days} дней"
         else:
-            recommendation = f"⏳ Рекомендуем подождать {total_days} дней ({total_days // 7} недель)"
+            weeks = total_days // 7
+            recommendation = f"⏳ Рекомендуем подождать {total_days} дней ({weeks} недель)"
 
         return CoolingAnalysis(
             is_blacklisted=False,

@@ -14,7 +14,13 @@ class ToolRegistry:
 
     def _register_all_tools(self):
         """Регистрирует все доступные тулкалы"""
-        print("reg")
+        from .tools.purchase import AddPurchaseTool
+        from .tools.blacklist import AddToBlacklistTool
+        from .tools.saving import UpdateSavingsTool
+
+        self.register(AddPurchaseTool())
+        self.register(AddToBlacklistTool())
+        self.register(UpdateSavingsTool())
 
     def register(self, tool: BaseTool) -> None:
         """Регистрирует тулкал"""
@@ -32,11 +38,10 @@ class ToolRegistry:
         """Возвращает схемы всех тулкалов для OpenAI"""
         return [tool.to_openai_schema().model_dump() for tool in self._tools.values()]
 
-    async def execute_tool(self, name: str, **kwargs) -> Dict[str, Any]:
+    async def execute_tool(self, tool_name: str, **kwargs) -> Dict[str, Any]:
         """Выполняет тулкал по имени"""
-        tool = self.get_tool(name)
-        if not tool:
-            raise ValueError(f"Тулкал '{name}' не найден")
+        if not (tool := self.get_tool(tool_name)):
+            raise ValueError(f"Тулкал '{tool_name}' не найден")
         return await tool.execute(**kwargs)
 
 
@@ -45,7 +50,5 @@ tool_registry = ToolRegistry()
 __all__ = [
     "BaseTool",
     "ToolRegistry",
-    "tool_registry",
-    "WeatherTool",
-    "ImageGenerationTool"
+    "tool_registry"
 ]

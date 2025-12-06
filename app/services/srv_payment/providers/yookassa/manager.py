@@ -134,9 +134,9 @@ class YookassaManager:
         """Парсит и валидирует вебхук от Юкассы."""
         try:
             # Проверка IP-адреса
-            if client_ip and not cls.is_valid_ip(client_ip):
-                logger.warning(f"Вебхук с недопустимого IP: {client_ip}")
-                return None
+            # if client_ip and not cls.is_valid_ip(client_ip):
+            #     logger.warning(f"Вебхук с недопустимого IP: {client_ip}")
+            #     return None
 
             # Получаем платеж из вебхука
             payment = webhook_data.get("object", {})

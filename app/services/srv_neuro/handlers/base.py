@@ -107,10 +107,11 @@ class BaseHandler(ABC):
     async def process(self, request: Request) -> bool:
         """Обработка запроса с общей логикой."""
         async with self._handle_errors(request):
-            # Получаем или создаем чат
-            title = await self._get_or_create_chat(request)
+            logger.info(f"Начало обработки запроса {request.id} от пользователя {request.user_id}")
 
-            print(title)
+            # Получаем или создаем чат
+            await self._get_or_create_chat(request)
+            logger.info(f"Чат {self._chat_id} готов к работе")
 
             async for db in get_session():
                 # Добавляем сообщение пользователя
@@ -118,41 +119,48 @@ class BaseHandler(ABC):
                     db, self._chat_id, request.payload.get("text"),
                     request.payload.get("model"), request.payload.get("attachments")
                 )
+                logger.info(f"Сообщение пользователя добавлено в чат {self._chat_id}")
 
                 # Получаем историю сообщений с системным промптом
-                messages = await HistoryManager.get_chat_history(db, self._chat_id)
-
+                messages = await HistoryManager.get_chat_history(db, self._chat_id, request.user_id)
+                logger.info(f"Загружено {len(messages)} сообщений из истории (включая системный промпт)")
 
                 # Создаем пустое сообщение ассистента заранее
                 assistant_message = await HistoryManager.add_assistant_message(
                     db, self._chat_id, "", request.payload.get("model")
                 )
-
+                logger.info(f"Создано сообщение ассистента {assistant_message.id}")
 
             # Обрабатываем сообщения с тулкалами
-            # processed_messages = await tool_manager.process_with_tools(
-            #     messages, TOOL_CALLS_MODEL
-            # )
+            processed_messages = await tool_manager.process_with_tools(
+                messages, TOOL_CALLS_MODEL,
+                user_id=str(request.user_id),
+                chat_id=str(self._chat_id)
+            )
 
             # Извлекаем аттачменты из результатов тулкалов
-            attachments = self._extract_attachments(messages)
+            if (attachments := self._extract_attachments(processed_messages)):
+                logger.info(f"Извлечено {len(attachments)} аттачментов")
 
             # Очищаем сообщения от метаданных для финального запроса
-            clean_messages = self._clean_messages_for_final_request(messages)
+            clean_messages = self._clean_messages_for_final_request(processed_messages)
+            logger.info(f"Сообщения очищены, отправляем {len(clean_messages)} сообщений в нейросеть")
 
             # Выполняем основную логику - генерим финальный ответ с учетом результат туллкалов
             result = await self._execute(request, clean_messages, assistant_message.id, attachments)
+            logger.info(f"Получен ответ от нейросети, длина: {len(result.content)} символов")
 
             # Обновляем сообщение с результатом
             async for db in get_session():
                 await HistoryManager.update_assistant_message_with_tools(
-                    db, assistant_message.id, result.content, messages, attachments
+                    db, assistant_message.id, result.content, processed_messages, attachments
                 )
+            logger.info(f"Сообщение ассистента {assistant_message.id} обновлено")
 
             # Обновляем статистику юзера
             await self._update_usage(request.user_id)
 
-            logger.info(f"Чат-запрос {request.id} выполнен")
+            logger.info(f"Чат-запрос {request.id} успешно выполнен")
             return True
 
 

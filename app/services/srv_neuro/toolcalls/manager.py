@@ -9,11 +9,14 @@ from . import tool_registry
 
 
 class ToolManager:
-    async def _execute_tool_call(self, call) -> Dict[str, Any]:
+    async def _execute_tool_call(self, call, **context) -> Dict[str, Any]:
         """Выполняет один tool call и возвращает результат с метаданными"""
         try:
             args = json.loads(call.function.arguments or '{}')
-            result = await tool_registry.execute_tool(call.function.name, **args)
+            args.update(context)
+            result = await tool_registry.execute_tool(
+                tool_name=call.function.name, **args
+            )
 
             metadata = {
                 "tool_name": call.function.name,
@@ -39,9 +42,10 @@ class ToolManager:
             }
 
 
-    async def process_with_tools(self, msgs: List[Dict[str, Any]], model: str = "gemini-1.5-flash") -> List[Dict[str, Any]]:
+    async def process_with_tools(self, msgs: List[Dict[str, Any]], model: str, **context) -> List[Dict[str, Any]]:
         response = await get_client("OpenaiLLM").chat_completion(
-            model=model, messages=msgs, tools=tool_registry.get_openai_schemas() or None, tool_choice="auto"
+            model=model, messages=msgs, tools=tool_registry.get_openai_schemas() or None or None,
+            tool_choice="auto"
         )
 
         print(f"\n\nTOOL CALLS: {response.choices[0].message.tool_calls}\n\n")
@@ -50,7 +54,7 @@ class ToolManager:
 
         # Выполняем все tool calls параллельно
         results = await asyncio.gather(*[
-            self._execute_tool_call(call)
+            self._execute_tool_call(call, **context)
             for call in tool_calls
         ])
 

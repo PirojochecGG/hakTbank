@@ -5,7 +5,7 @@ from typing import List, Dict
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.storage import MessageRole, Message, Chat
+from app.storage import MessageRole, Message, Chat, User
 from ..config import BASE_SYSTEM_PROMPT
 
 
@@ -13,9 +13,39 @@ class HistoryManager:
     """Менеджер истории сообщений чата."""
 
     @staticmethod
-    async def get_system_prompt() -> str:
-        """Получает системный промпт чата."""
-        return BASE_SYSTEM_PROMPT
+    async def get_system_prompt(db: AsyncSession, chat_id: UUID, user_id: UUID) -> str:
+        """Получает системный промпт с контекстом пользователя и покупок."""
+        from app.services import get_service
+
+        if not (user := await db.get(User, user_id)):
+            return BASE_SYSTEM_PROMPT
+
+        purchases = await get_service.purchase.get_chat_purchases(db, chat_id, user_id)
+        
+        # Формируем профиль
+        profile = f"""\n\n=== ПРОФИЛЬ ===
+ЗП: {user.monthly_salary:,}₽/мес | Откладывает: {user.monthly_savings:,}₽/мес | Накопления: {user.current_savings:,}₽
+Запрещено: {', '.join(user.blacklist) or 'нет'}"""
+        
+        # Добавляем диапазоны охлаждения
+        if user.cooling_ranges:
+            ranges = '\n'.join(f"{r['min_amount']:,}-{r['max_amount']:,}₽ → {r['days']}д" for r in user.cooling_ranges)
+            profile += f"\nОхлаждение:\n{ranges}"
+        else:
+            profile += "\nОхлаждение: не настроено"
+        
+        # Добавляем покупки
+        if purchases:
+            items = []
+            for p in purchases:
+                emoji = {"pending": "⏳", "purchased": "✅", "cancelled": "❌"}.get(p.status, "")
+                date = p.available_date.strftime('%d.%m.%Y') if p.available_date else 'сейчас'
+                items.append(f"{emoji} {p.name} | {p.price:,}₽ | {p.category} | {p.cooling_days}д | {date}")
+            purchases_text = f"\n\n=== ПОКУПКИ ({len(purchases)}) ===\n" + '\n'.join(items)
+        else:
+            purchases_text = "\n\n=== ПОКУПКИ ===\nПусто"
+        
+        return BASE_SYSTEM_PROMPT + profile + purchases_text
 
 
     @staticmethod
@@ -64,7 +94,7 @@ class HistoryManager:
 
 
     @staticmethod
-    async def get_chat_history(db: AsyncSession, chat_id: UUID, limit: int = 10) -> List[Dict]:
+    async def get_chat_history(db: AsyncSession, chat_id: UUID, user_id: UUID, limit: int = 10) -> List[Dict]:
         """Получает последние сообщения чата в формате для нейросети."""
         messages = (await db.execute(
             select(Message).where(Message.chat_id == chat_id)
@@ -76,7 +106,7 @@ class HistoryManager:
             HistoryManager._move_assistant_attachments(msg, formatted_messages)
             formatted_messages.append(HistoryManager._format_message_content(msg))
 
-        if system_prompt := await HistoryManager.get_system_prompt():
+        if system_prompt := await HistoryManager.get_system_prompt(db, chat_id, user_id):
             formatted_messages.insert(0, {"role": "system", "content": system_prompt})
         return formatted_messages
 
