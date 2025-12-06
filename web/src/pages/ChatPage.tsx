@@ -663,7 +663,7 @@ export function ChatPage() {
     >
       <Box>
         <Typography variant="h4" gutterBottom>
-          Охладить трахание
+          Охладитель
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Опиши покупку или ситуацию, а ассистент подскажет, стоит ли ждать и до какой даты покупка
