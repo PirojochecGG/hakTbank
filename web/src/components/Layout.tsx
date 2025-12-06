@@ -43,7 +43,8 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const userInitial = user?.nickname?.[0] || user?.email?.[0] || "?";
-  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
+  const isAuthPage =
+    location.pathname === "/login" || location.pathname === "/register";
 
   return (
     <Box
@@ -186,7 +187,7 @@ function DrawerContent({
       <Box>
         <Box sx={{ mb: 2 }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            T-Bank
+            Адвокат Залупкич
           </Typography>
           <Typography variant="caption" color="text.secondary">
             Рациональный ассистент
@@ -275,7 +276,12 @@ function DrawerContent({
           </Stack>
         ) : (
           <Stack spacing={1}>
-            <Button component={NavLink} to="/login" variant="contained" fullWidth>
+            <Button
+              component={NavLink}
+              to="/login"
+              variant="contained"
+              fullWidth
+            >
               Войти
             </Button>
             <Button
@@ -291,7 +297,7 @@ function DrawerContent({
         )}
         <Divider sx={{ mt: 2, mb: 1 }} />
         <Typography variant="caption" color="text.secondary">
-          Сделано для хакатона T-Bank.
+          Сделано для хакатона Адвокат Залупкич.
         </Typography>
       </Box>
     </>

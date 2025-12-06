@@ -81,7 +81,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     >
       <Box sx={{ textAlign: "center", mb: 3 }}>
         <Typography variant="h4" sx={{ color: "#FFD600", fontWeight: 700 }}>
-          Т-Банк
+          Адвокат Залупкич
         </Typography>
         <Typography variant="h6" sx={{ mt: 1, color: "#FFFFFF" }}>
           Вход в аккаунт
