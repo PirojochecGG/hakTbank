@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.storage import get_session, Subscription, Tariff, Transaction
-from app.services.srv_payment import PaymentManager, PaymentProvider
+from app.services.srv_payment import PaymentManager
 from app.services import get_service
 from .base import BaseJob
 
@@ -72,7 +72,7 @@ class Job(BaseJob):
 
                         # ---- Пытаемся продлить подписку автоплатежом ----
                         if payment := await PaymentManager.create_recurring_payment(
-                            db, user_id, sub.tariff_id, sub.payment_id, PaymentProvider.YOOKASSA
+                            db, user_id, sub.tariff_id, sub.payment_id
                         ):
                             logger.info(f"🔄 User {user_id}: renewal created with status {payment.status}")
 
