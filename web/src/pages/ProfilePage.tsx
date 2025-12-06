@@ -4,8 +4,6 @@ import {
   Typography,
   Grid,
   TextField,
-  Switch,
-  FormControlLabel,
   Paper,
   Button,
   Stack,
@@ -17,7 +15,12 @@ import {
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import { apiFetch } from '../api/api'
-import { useAuth, type ProfileRule } from '../context/AuthContext'
+import {
+  type NotificationChannel,
+  type NotificationFrequency,
+  useAuth,
+  type ProfileRule,
+} from '../context/AuthContext'
 
 type CoolingRange = {
   id: number
@@ -29,13 +32,12 @@ type CoolingRange = {
 export function ProfilePage() {
   const { profile, refreshProfile } = useAuth()
   const [nickname, setNickname] = useState('')
-  const [monthlyIncome, setMonthlyIncome] = useState('')
+  const [monthlySalary, setMonthlySalary] = useState('')
   const [monthlySavings, setMonthlySavings] = useState('')
   const [currentSavings, setCurrentSavings] = useState('')
-  const [useSavings, setUseSavings] = useState(true)
 
-  const [notifyChannel, setNotifyChannel] = useState<'none' | 'email' | 'app'>('none')
-  const [notifyFrequency, setNotifyFrequency] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
+  const [notifyChannel, setNotifyChannel] = useState<NotificationChannel>('none')
+  const [notifyFrequency, setNotifyFrequency] = useState<NotificationFrequency>('weekly')
 
   const [coolingRanges, setCoolingRanges] = useState<CoolingRange[]>([
     { id: 1, minAmount: 0, maxAmount: 5000, days: 1 },
@@ -68,10 +70,9 @@ export function ProfilePage() {
     if (!profile) return
 
     setNickname(profile.nickname ?? '')
-    setMonthlyIncome(profile.monthlyIncome != null ? String(profile.monthlyIncome) : '')
+    setMonthlySalary(profile.monthlySalary != null ? String(profile.monthlySalary) : '')
     setMonthlySavings(profile.monthlySavings != null ? String(profile.monthlySavings) : '')
     setCurrentSavings(profile.currentSavings != null ? String(profile.currentSavings) : '')
-    setUseSavings(profile.useSavings)
     setNotifyChannel(profile.notifyChannel)
     setNotifyFrequency(profile.notifyFrequency)
 
@@ -166,10 +167,9 @@ export function ProfilePage() {
 
     const payload = {
       nickname: nickname.trim(),
-      monthly_income: parseNumber(monthlyIncome),
+      monthly_salary: parseNumber(monthlySalary),
       monthly_savings: parseNumber(monthlySavings),
       current_savings: parseNumber(currentSavings),
-      use_savings: useSavings,
       notify_channel: notifyChannel,
       notify_frequency: notifyFrequency,
       cooling_ranges: coolingRanges.map((r) => ({
@@ -177,7 +177,7 @@ export function ProfilePage() {
         max_amount: r.maxAmount,
         days: r.days,
       })),
-      blacklist_categories: blacklist,
+      blacklist,
     }
 
     setIsSaving(true)
@@ -241,10 +241,10 @@ export function ProfilePage() {
                 label="Доход в месяц, ₽"
                 type="text"
                 inputMode="numeric"
-                value={monthlyIncome}
+                value={monthlySalary}
                 onChange={(e) => {
                   const filtered = filterNumberInput(e.target.value)
-                  setMonthlyIncome(filtered)
+                  setMonthlySalary(filtered)
                 }}
               />
             </Grid>
@@ -275,18 +275,6 @@ export function ProfilePage() {
               />
             </Grid>
           </Grid>
-          <Box mt={2}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={useSavings}
-                  onChange={(e) => setUseSavings(e.target.checked)}
-                  color="primary"
-                />
-              }
-              label="Учитывать накопления при расчёте комфортной даты покупки"
-            />
-          </Box>
         </Paper>
 
         {/* Период охлаждения */}
@@ -470,21 +458,18 @@ export function ProfilePage() {
                   select
                   label="Канал"
                   value={notifyChannel}
-                  onChange={(e) => setNotifyChannel(e.target.value as 'none' | 'email' | 'app')}
+                  onChange={(e) => setNotifyChannel(e.target.value as NotificationChannel)}
                   fullWidth
                 >
                   <MenuItem value="none">Не напоминать</MenuItem>
                   <MenuItem value="email">E-mail</MenuItem>
-                  <MenuItem value="app">В приложении</MenuItem>
                 </TextField>
 
                 <TextField
                   select
                   label="Частота"
                   value={notifyFrequency}
-                  onChange={(e) =>
-                    setNotifyFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')
-                  }
+                  onChange={(e) => setNotifyFrequency(e.target.value as NotificationFrequency)}
                   fullWidth
                 >
                   <MenuItem value="daily">Каждый день</MenuItem>
