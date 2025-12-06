@@ -121,7 +121,7 @@ export function Layout({ children }: LayoutProps) {
       {!isAuthPage && (
         <Drawer
           variant="temporary"
-          anchor="right"
+          anchor="left"
           open={mobileMenuOpen}
           onClose={handleMobileMenuClose}
           sx={{
@@ -131,7 +131,7 @@ export function Layout({ children }: LayoutProps) {
               maxWidth: 300,
               boxSizing: "border-box",
               bgcolor: "background.paper",
-              borderLeft: "1px solid rgba(255,255,255,0.08)",
+              borderRight: "1px solid rgba(255,255,255,0.08)",
               overflow: "auto",
               display: "flex",
               flexDirection: "column",
