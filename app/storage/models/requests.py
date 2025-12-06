@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional, TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import JSON, DateTime, ForeignKey, Text, delete
 
-from ..enums import RequestStatus
+from ..enums import RequestStatus, RequestPriority
 from .base import Base
 
 if TYPE_CHECKING:
@@ -20,9 +20,8 @@ class Request(Base):
 
     user_id:      Mapped[UUID]               = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     status:       Mapped[RequestStatus]      = mapped_column(default=RequestStatus.PENDING, nullable=False, index=True)
+    priority:     Mapped[RequestPriority]    = mapped_column(default=RequestPriority.GENERAL, nullable=False, index=True)
     payload:      Mapped[Dict[str, Any]]     = mapped_column(JSON, default=dict, nullable=False)
-    attempts:     Mapped[int]                = mapped_column(default=0, nullable=False)
-    max_attempts: Mapped[int]                = mapped_column(default=3, nullable=False)
     locked_at:    Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), index=True)
     processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     error:        Mapped[Optional[str]]      = mapped_column(Text)

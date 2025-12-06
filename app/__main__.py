@@ -25,6 +25,7 @@ async def main() -> None:
 
         _, pending = await asyncio.wait([
             asyncio.create_task(start_server()),
+            asyncio.create_task(get_service.neuro.start_execute()),
             ], return_when=asyncio.FIRST_COMPLETED,
         )
         for task in pending:
