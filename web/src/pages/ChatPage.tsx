@@ -32,6 +32,13 @@ type ChatWithMessagesResponse = {
   messages?: ApiChatMessage[]
 }
 
+type ChatRequest = {
+  text: string
+  chat_id: string
+  model?: string
+  stream?: boolean
+}
+
 type ChatResponse = {
   id?: string
   chat_id?: string
@@ -108,14 +115,7 @@ export function ChatPage() {
   const PAGE_SIZE = 10
 
   const fetchChatList = useCallback(async (page = 1) => {
-    setIsLoadingChats(true)
-    try {
-      const query = new URLSearchParams({
-        page: String(page),
-        size: String(PAGE_SIZE),
-        sort: 'updated_at,desc',
-      })
-
+    const fetchWithQuery = async (query: URLSearchParams) => {
       const response = await apiFetch<ChatListResponse | ChatListItem[]>(
         `/chats?${query.toString()}`,
       )
@@ -137,7 +137,32 @@ export function ChatPage() {
       setHasMoreChats(total > currentPage * limit || normalized.length === limit)
       setChatPage(currentPage)
       return normalized
+    }
+
+    setIsLoadingChats(true)
+    try {
+      const defaultQuery = new URLSearchParams({
+        page: String(page),
+        size: String(PAGE_SIZE),
+        sort: 'updated_at,desc',
+      })
+
+      return await fetchWithQuery(defaultQuery)
     } catch (error) {
+      if ((error as { status?: number }).status === 422) {
+        try {
+          const fallbackQuery = new URLSearchParams({
+            page: String(page),
+            per_page: String(PAGE_SIZE),
+          })
+
+          return await fetchWithQuery(fallbackQuery)
+        } catch (fallbackError) {
+          console.error('Ошибка загрузки списка чатов (fallback)', fallbackError)
+          return []
+        }
+      }
+
       console.error('Ошибка загрузки списка чатов', error)
       return []
     } finally {
@@ -260,12 +285,28 @@ export function ChatPage() {
     setIsSending(true)
 
     try {
-      await apiFetch<ChatResponse>(`/chats/${chatId}/messages`, {
+      const chatRequest: ChatRequest = { text: trimmed, chat_id: chatId }
+
+      const response = await apiFetch<ChatResponse>('/message/new', {
         method: 'POST',
-        body: JSON.stringify({ role: 'user', text: trimmed }),
+        body: JSON.stringify(chatRequest),
       })
 
-      await fetchMessages(chatId)
+      const responseMessages = normalizeMessages(
+        response.messages ?? (response.message ? [response.message] : undefined),
+      )
+
+      if (responseMessages.length) {
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map((message) => message.id))
+          const uniqueNewMessages = responseMessages.filter(
+            (message) => !existingIds.has(message.id),
+          )
+          return uniqueNewMessages.length ? [...prev, ...uniqueNewMessages] : prev
+        })
+      } else {
+        await fetchMessages(chatId)
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Не удалось связаться с сервером.'
@@ -375,7 +416,7 @@ export function ChatPage() {
       <Stack spacing={2}>
         <Box>
           <Typography variant="h4" gutterBottom>
-            Чат с моделью
+            Охладить трахание
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Опиши покупку или ситуацию, а ассистент подскажет, стоит ли ждать и до какой даты
@@ -528,7 +569,7 @@ export function ChatPage() {
                         color: msg.role === 'user' ? 'rgba(0,0,0,0.6)' : 'text.secondary',
                       }}
                     >
-                      {msg.role === 'user' ? 'Ты' : 'Ассистент'}
+                      {msg.role === 'user' ? '' : 'Ассистент'}
                     </Typography>
                     <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
                       {msg.text}

@@ -24,24 +24,25 @@ export type ProfileRule = {
 
 export type UserProfileResponse = {
   nickname?: string | null
-  monthly_income?: number | null
+  monthly_salary?: number | null
   monthly_savings?: number | null
   current_savings?: number | null
-  use_savings?: boolean
-  notify_channel?: 'none' | 'email'
-  notify_frequency?: 'daily' | 'weekly' | 'monthly'
+  notify_channel?: NotificationChannel
+  notify_frequency?: NotificationFrequency
   cooling_ranges?: ProfileRule[]
-  blacklist_categories?: string[]
+  blacklist?: string[]
 }
+
+export type NotificationChannel = 'none' | 'email'
+export type NotificationFrequency = 'daily' | 'weekly' | 'monthly'
 
 export type ProfileData = {
   nickname: string
-  monthlyIncome: number | null
+  monthlySalary: number | null
   monthlySavings: number | null
   currentSavings: number | null
-  useSavings: boolean
-  notifyChannel: 'none' | 'email'
-  notifyFrequency: 'daily' | 'weekly' | 'monthly'
+  notifyChannel: NotificationChannel
+  notifyFrequency: NotificationFrequency
   coolingRanges: ProfileRule[]
   blacklist: string[]
 }
@@ -61,14 +62,13 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 const normalizeProfile = (data: UserProfileResponse): ProfileData => ({
   nickname: data.nickname ?? '',
-  monthlyIncome: data.monthly_income ?? null,
+  monthlySalary: data.monthly_salary ?? null,
   monthlySavings: data.monthly_savings ?? null,
   currentSavings: data.current_savings ?? null,
-  useSavings: data.use_savings ?? true,
   notifyChannel: data.notify_channel ?? 'none',
   notifyFrequency: data.notify_frequency ?? 'weekly',
   coolingRanges: data.cooling_ranges ?? [],
-  blacklist: data.blacklist_categories ?? [],
+  blacklist: data.blacklist ?? [],
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {

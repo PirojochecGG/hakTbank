@@ -235,7 +235,7 @@ function DrawerContent({ token, user, userInitial, onLogout, onNavigate }: Drawe
             <ListItemIcon sx={{ color: 'text.secondary' }}>
               <ChatBubbleOutlineIcon />
             </ListItemIcon>
-            <ListItemText primary="Чат с моделью" />
+            <ListItemText primary="Охладиться" />
           </ListItemButton>
           <ListItemButton
             component={NavLink}
