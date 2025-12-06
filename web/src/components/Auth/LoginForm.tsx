@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react'
 import {
   Alert,
   Box,
@@ -11,79 +11,74 @@ import {
   Paper,
   TextField,
   Typography,
-} from "@mui/material";
-import { Email, Lock, Visibility, VisibilityOff } from "@mui/icons-material";
-import { useAuth } from "../../context/AuthContext";
-import TButton from "../Common/TButton";
+} from '@mui/material'
+import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material'
+import { useAuth } from '../../context/AuthContext'
+import TButton from '../Common/TButton'
 
 type LoginData = {
-  email: string;
-  password: string;
-};
-
-interface LoginFormProps {
-  onSuccess: () => void;
-  onSwitchToRegister: () => void;
+  email: string
+  password: string
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({
-  onSuccess,
-  onSwitchToRegister,
-}) => {
-  const { login } = useAuth();
+interface LoginFormProps {
+  onSuccess: () => void
+  onSwitchToRegister: () => void
+}
+
+const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegister }) => {
+  const { login } = useAuth()
   const [formData, setFormData] = useState<LoginData>({
-    email: "",
-    password: "",
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+    email: '',
+    password: '',
+  })
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+    e.preventDefault()
+    setError('')
 
     if (!formData.email || !formData.password) {
-      setError("Введите email и пароль");
-      return;
+      setError('Введите email и пароль')
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     try {
-      await login(formData);
+      await login(formData)
 
-      onSuccess();
+      onSuccess()
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Неверный email или пароль";
-      setError(message);
+      const message = err instanceof Error ? err.message : 'Неверный email или пароль'
+      setError(message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const handleChange =
-    (field: keyof LoginData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData({ ...formData, [field]: e.target.value });
-    };
+  const handleChange = (field: keyof LoginData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [field]: e.target.value })
+  }
 
   return (
     <Paper
       sx={{
         p: 4,
-        backgroundColor: "#1A1A1A",
+        backgroundColor: '#1A1A1A',
         maxWidth: 400,
-        width: "100%",
-        mx: "auto",
+        width: '100%',
+        mx: 'auto',
       }}
     >
-      <Box sx={{ textAlign: "center", mb: 3 }}>
-        <Typography variant="h4" sx={{ color: "#FFD600", fontWeight: 700 }}>
+      <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <Typography variant="h4" sx={{ color: '#FFD600', fontWeight: 700 }}>
           Адвокат Залупкич
         </Typography>
-        <Typography variant="h6" sx={{ mt: 1, color: "#FFFFFF" }}>
+        <Typography variant="h6" sx={{ mt: 1, color: '#FFFFFF' }}>
           Вход в аккаунт
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -103,13 +98,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
           label="Email"
           type="email"
           value={formData.email}
-          onChange={handleChange("email")}
+          onChange={handleChange('email')}
           margin="normal"
           required
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Email sx={{ color: "#FFD600" }} />
+                <Email sx={{ color: '#FFD600' }} />
               </InputAdornment>
             ),
           }}
@@ -118,15 +113,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
         <TextField
           fullWidth
           label="Пароль"
-          type={showPassword ? "text" : "password"}
+          type={showPassword ? 'text' : 'password'}
           value={formData.password}
-          onChange={handleChange("password")}
+          onChange={handleChange('password')}
           margin="normal"
           required
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Lock sx={{ color: "#FFD600" }} />
+                <Lock sx={{ color: '#FFD600' }} />
               </InputAdornment>
             ),
             endAdornment: (
@@ -134,7 +129,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 <IconButton
                   onClick={() => setShowPassword(!showPassword)}
                   edge="end"
-                  sx={{ color: "#FFD600" }}
+                  sx={{ color: '#FFD600' }}
                 >
                   {showPassword ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
@@ -145,9 +140,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             mt: 2,
           }}
         >
@@ -157,25 +152,25 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
                 sx={{
-                  color: "#FFD600",
-                  "&.Mui-checked": {
-                    color: "#FFD600",
+                  color: '#FFD600',
+                  '&.Mui-checked': {
+                    color: '#FFD600',
                   },
                 }}
               />
             }
             label="Запомнить меня"
-            sx={{ color: "#FFFFFF" }}
+            sx={{ color: '#FFFFFF' }}
           />
 
           <Button
             type="button"
             sx={{
-              color: "#FFD600",
+              color: '#FFD600',
               fontWeight: 500,
-              fontSize: "0.875rem",
-              "&:hover": {
-                backgroundColor: "rgba(255, 214, 0, 0.1)",
+              fontSize: '0.875rem',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 214, 0, 0.1)',
               },
             }}
           >
@@ -183,23 +178,18 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </Button>
         </Box>
 
-        <TButton
-          type="submit"
-          fullWidth
-          disabled={loading}
-          sx={{ mt: 3, py: 1.5 }}
-        >
-          {loading ? "Вход..." : "Войти"}
+        <TButton type="submit" fullWidth disabled={loading} sx={{ mt: 3, py: 1.5 }}>
+          {loading ? 'Вход...' : 'Войти'}
         </TButton>
       </form>
 
-      <Divider sx={{ my: 3, borderColor: "#333333" }}>
+      <Divider sx={{ my: 3, borderColor: '#333333' }}>
         <Typography variant="body2" color="text.secondary">
           или
         </Typography>
       </Divider>
 
-      <Box sx={{ textAlign: "center" }}>
+      <Box sx={{ textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary">
           Нет аккаунта?
         </Typography>
@@ -207,10 +197,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
           onClick={onSwitchToRegister}
           sx={{
             mt: 1,
-            color: "#FFD600",
+            color: '#FFD600',
             fontWeight: 600,
-            "&:hover": {
-              backgroundColor: "rgba(255, 214, 0, 0.1)",
+            '&:hover': {
+              backgroundColor: 'rgba(255, 214, 0, 0.1)',
             },
           }}
         >
@@ -218,7 +208,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         </Button>
       </Box>
     </Paper>
-  );
-};
+  )
+}
 
-export default LoginForm;
+export default LoginForm

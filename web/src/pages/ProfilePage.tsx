@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import {
   Box,
   Typography,
@@ -13,45 +13,41 @@ import {
   Chip,
   MenuItem,
   Divider,
-} from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { apiFetch } from "../api";
-import { useAuth, type ProfileRule } from "../context/AuthContext";
+} from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import { apiFetch } from '../api/api'
+import { useAuth, type ProfileRule } from '../context/AuthContext'
 
 type CoolingRange = {
-  id: number;
-  minAmount: number;
-  maxAmount: number | null;
-  days: number;
-};
+  id: number
+  minAmount: number
+  maxAmount: number | null
+  days: number
+}
 
 export function ProfilePage() {
-  const { profile, refreshProfile } = useAuth();
-  const [nickname, setNickname] = useState("");
-  const [monthlyIncome, setMonthlyIncome] = useState("");
-  const [monthlySavings, setMonthlySavings] = useState("");
-  const [currentSavings, setCurrentSavings] = useState("");
-  const [useSavings, setUseSavings] = useState(true);
+  const { profile, refreshProfile } = useAuth()
+  const [nickname, setNickname] = useState('')
+  const [monthlyIncome, setMonthlyIncome] = useState('')
+  const [monthlySavings, setMonthlySavings] = useState('')
+  const [currentSavings, setCurrentSavings] = useState('')
+  const [useSavings, setUseSavings] = useState(true)
 
-  const [notifyChannel, setNotifyChannel] = useState<"none" | "email" | "app">(
-    "none"
-  );
-  const [notifyFrequency, setNotifyFrequency] = useState<
-    "daily" | "weekly" | "monthly"
-  >("weekly");
+  const [notifyChannel, setNotifyChannel] = useState<'none' | 'email' | 'app'>('none')
+  const [notifyFrequency, setNotifyFrequency] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
 
   const [coolingRanges, setCoolingRanges] = useState<CoolingRange[]>([
     { id: 1, minAmount: 0, maxAmount: 5000, days: 1 },
     { id: 2, minAmount: 5000, maxAmount: 20000, days: 3 },
     { id: 3, minAmount: 20000, maxAmount: null, days: 7 },
-  ]);
+  ])
 
-  const [blacklistInput, setBlacklistInput] = useState("");
-  const [blacklist, setBlacklist] = useState<string[]>([]);
+  const [blacklistInput, setBlacklistInput] = useState('')
+  const [blacklist, setBlacklist] = useState<string[]>([])
 
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
   const defaultRanges: CoolingRange[] = useMemo(
     () => [
@@ -59,31 +55,25 @@ export function ProfilePage() {
       { id: 2, minAmount: 5000, maxAmount: 20000, days: 3 },
       { id: 3, minAmount: 20000, maxAmount: null, days: 7 },
     ],
-    []
-  );
+    [],
+  )
 
   useEffect(() => {
     if (!profile) {
-      void refreshProfile();
+      void refreshProfile()
     }
-  }, [profile, refreshProfile]);
+  }, [profile, refreshProfile])
 
   useEffect(() => {
-    if (!profile) return;
+    if (!profile) return
 
-    setNickname(profile.nickname ?? "");
-    setMonthlyIncome(
-      profile.monthlyIncome != null ? String(profile.monthlyIncome) : ""
-    );
-    setMonthlySavings(
-      profile.monthlySavings != null ? String(profile.monthlySavings) : ""
-    );
-    setCurrentSavings(
-      profile.currentSavings != null ? String(profile.currentSavings) : ""
-    );
-    setUseSavings(profile.useSavings);
-    setNotifyChannel(profile.notifyChannel);
-    setNotifyFrequency(profile.notifyFrequency);
+    setNickname(profile.nickname ?? '')
+    setMonthlyIncome(profile.monthlyIncome != null ? String(profile.monthlyIncome) : '')
+    setMonthlySavings(profile.monthlySavings != null ? String(profile.monthlySavings) : '')
+    setCurrentSavings(profile.currentSavings != null ? String(profile.currentSavings) : '')
+    setUseSavings(profile.useSavings)
+    setNotifyChannel(profile.notifyChannel)
+    setNotifyFrequency(profile.notifyFrequency)
 
     const mappedRules: CoolingRange[] =
       profile.coolingRanges.length > 0
@@ -93,25 +83,25 @@ export function ProfilePage() {
             maxAmount: rule.max_amount,
             days: rule.days,
           }))
-        : defaultRanges;
+        : defaultRanges
 
-    setCoolingRanges(mappedRules);
-    setBlacklist(profile.blacklist);
-  }, [defaultRanges, profile]);
+    setCoolingRanges(mappedRules)
+    setBlacklist(profile.blacklist)
+  }, [defaultRanges, profile])
 
   const parseNumber = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return null;
-    const num = Number(trimmed);
-    return Number.isNaN(num) ? null : num;
-  };
+    const trimmed = value.trim()
+    if (!trimmed) return null
+    const num = Number(trimmed)
+    return Number.isNaN(num) ? null : num
+  }
 
   // Фильтруем ввод: только целые неотрицательные числа (без точки, +, -)
   const filterNumberInput = (value: string): string => {
-    if (value === "") return "";
+    if (value === '') return ''
     // Оставляем только цифры
-    return value.replace(/[^\d]/g, "");
-  };
+    return value.replace(/[^\d]/g, '')
+  }
 
   const handleAddRule = () => {
     setCoolingRanges((prev) => [
@@ -122,60 +112,56 @@ export function ProfilePage() {
         maxAmount: null,
         days: 1,
       },
-    ]);
-  };
+    ])
+  }
 
-  const handleRuleChange = (
-    id: number,
-    field: keyof Omit<CoolingRange, "id">,
-    value: string
-  ) => {
+  const handleRuleChange = (id: number, field: keyof Omit<CoolingRange, 'id'>, value: string) => {
     setCoolingRanges((prev) =>
       prev.map((rule) => {
-        if (rule.id !== id) return rule;
-        if (field === "maxAmount") {
+        if (rule.id !== id) return rule
+        if (field === 'maxAmount') {
           return {
             ...rule,
-            maxAmount: value === "" ? null : Number(value),
-          };
+            maxAmount: value === '' ? null : Number(value),
+          }
         }
-        if (field === "minAmount" || field === "days") {
+        if (field === 'minAmount' || field === 'days') {
           return {
             ...rule,
-            [field]: value === "" ? 0 : Number(value),
-          };
+            [field]: value === '' ? 0 : Number(value),
+          }
         }
-        return rule;
-      })
-    );
-  };
+        return rule
+      }),
+    )
+  }
 
   const handleRemoveRule = (id: number) => {
-    setCoolingRanges((prev) => prev.filter((r) => r.id !== id));
-  };
+    setCoolingRanges((prev) => prev.filter((r) => r.id !== id))
+  }
 
   const handleAddBlacklistItem = () => {
-    const trimmed = blacklistInput.trim();
-    if (!trimmed) return;
+    const trimmed = blacklistInput.trim()
+    if (!trimmed) return
     if (blacklist.includes(trimmed)) {
-      setBlacklistInput("");
-      return;
+      setBlacklistInput('')
+      return
     }
-    setBlacklist((prev) => [...prev, trimmed]);
-    setBlacklistInput("");
-  };
+    setBlacklist((prev) => [...prev, trimmed])
+    setBlacklistInput('')
+  }
 
   const handleRemoveBlacklistItem = (item: string) => {
-    setBlacklist((prev) => prev.filter((c) => c !== item));
-  };
+    setBlacklist((prev) => prev.filter((c) => c !== item))
+  }
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setSaveMessage(null);
+    e.preventDefault()
+    setSaveMessage(null)
 
     if (!nickname.trim()) {
-      setSaveMessage("Укажи никнейм.");
-      return;
+      setSaveMessage('Укажи никнейм.')
+      return
     }
 
     const payload = {
@@ -192,31 +178,26 @@ export function ProfilePage() {
         days: r.days,
       })),
       blacklist_categories: blacklist,
-    };
-
-    setIsSaving(true);
-    try {
-      await apiFetch("/user/profile", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-
-      setSaveMessage("Профиль сохранён.");
-      void refreshProfile();
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Не удалось сохранить профиль.";
-      const errorCode = (error as { code?: string }).code;
-
-      setSaveMessage(
-        errorCode ? `${errorMessage} (код ошибки: ${errorCode})` : errorMessage
-      );
-    } finally {
-      setIsSaving(false);
     }
-  };
+
+    setIsSaving(true)
+    try {
+      await apiFetch('/user/profile', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+
+      setSaveMessage('Профиль сохранён.')
+      void refreshProfile()
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Не удалось сохранить профиль.'
+      const errorCode = (error as { code?: string }).code
+
+      setSaveMessage(errorCode ? `${errorMessage} (код ошибки: ${errorCode})` : errorMessage)
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
@@ -226,8 +207,7 @@ export function ProfilePage() {
             Профиль
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Здесь ты настраиваешь, как ассистент будет охлаждать покупки и
-            считать комфортную дату.
+            Здесь ты настраиваешь, как ассистент будет охлаждать покупки и считать комфортную дату.
           </Typography>
         </Box>
 
@@ -263,8 +243,8 @@ export function ProfilePage() {
                 inputMode="numeric"
                 value={monthlyIncome}
                 onChange={(e) => {
-                  const filtered = filterNumberInput(e.target.value);
-                  setMonthlyIncome(filtered);
+                  const filtered = filterNumberInput(e.target.value)
+                  setMonthlyIncome(filtered)
                 }}
               />
             </Grid>
@@ -276,8 +256,8 @@ export function ProfilePage() {
                 inputMode="numeric"
                 value={monthlySavings}
                 onChange={(e) => {
-                  const filtered = filterNumberInput(e.target.value);
-                  setMonthlySavings(filtered);
+                  const filtered = filterNumberInput(e.target.value)
+                  setMonthlySavings(filtered)
                 }}
               />
             </Grid>
@@ -289,8 +269,8 @@ export function ProfilePage() {
                 inputMode="numeric"
                 value={currentSavings}
                 onChange={(e) => {
-                  const filtered = filterNumberInput(e.target.value);
-                  setCurrentSavings(filtered);
+                  const filtered = filterNumberInput(e.target.value)
+                  setCurrentSavings(filtered)
                 }}
               />
             </Grid>
@@ -325,19 +305,16 @@ export function ProfilePage() {
               size="small"
               startIcon={<AddIcon />}
               onClick={handleAddRule}
-              sx={{ whiteSpace: "nowrap" }}
+              sx={{ whiteSpace: 'nowrap' }}
             >
               Добавить
             </Button>
           </Box>
           <Typography variant="body2" color="text.secondary" mt={1} mb={2}>
-            Для каждого диапазона суммы укажи, сколько дней подождать перед
-            покупкой.
+            Для каждого диапазона суммы укажи, сколько дней подождать перед покупкой.
           </Typography>
 
           <Stack spacing={1.5}>
-            
-
             {coolingRanges.map((rule) => (
               <Grid key={rule.id} container spacing={1} alignItems="flex-start">
                 <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 1, md: 1 } }}>
@@ -351,8 +328,8 @@ export function ProfilePage() {
                     size="small"
                     value={rule.minAmount}
                     onChange={(e) => {
-                      const filtered = filterNumberInput(e.target.value);
-                      handleRuleChange(rule.id, "minAmount", filtered);
+                      const filtered = filterNumberInput(e.target.value)
+                      handleRuleChange(rule.id, 'minAmount', filtered)
                     }}
                   />
                 </Grid>
@@ -366,10 +343,10 @@ export function ProfilePage() {
                     inputMode="numeric"
                     size="small"
                     placeholder="∞"
-                    value={rule.maxAmount ?? ""}
+                    value={rule.maxAmount ?? ''}
                     onChange={(e) => {
-                      const filtered = filterNumberInput(e.target.value);
-                      handleRuleChange(rule.id, "maxAmount", filtered);
+                      const filtered = filterNumberInput(e.target.value)
+                      handleRuleChange(rule.id, 'maxAmount', filtered)
                     }}
                   />
                 </Grid>
@@ -377,7 +354,7 @@ export function ProfilePage() {
                   <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
                     Дней ожидания
                   </Typography>
-                  <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end" }}>
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
                     <TextField
                       fullWidth
                       type="text"
@@ -385,21 +362,29 @@ export function ProfilePage() {
                       size="small"
                       value={rule.days}
                       onChange={(e) => {
-                        const filtered = filterNumberInput(e.target.value);
-                        handleRuleChange(rule.id, "days", filtered);
+                        const filtered = filterNumberInput(e.target.value)
+                        handleRuleChange(rule.id, 'days', filtered)
                       }}
                     />
                     <IconButton
                       color="inherit"
                       onClick={() => handleRemoveRule(rule.id)}
                       size="small"
-                      sx={{ display: { xs: "none", md: "flex" } }}
+                      sx={{ display: { xs: 'none', md: 'flex' } }}
                     >
                       <DeleteOutlineIcon />
                     </IconButton>
                   </Box>
                 </Grid>
-                <Grid size={{ xs: 12, md: 3 }} sx={{ order: { xs: 4, md: 4 }, display: { xs: "flex", md: "none" }, alignItems: "flex-start", pt: 0.5 }}>
+                <Grid
+                  size={{ xs: 12, md: 3 }}
+                  sx={{
+                    order: { xs: 4, md: 4 },
+                    display: { xs: 'flex', md: 'none' },
+                    alignItems: 'flex-start',
+                    pt: 0.5,
+                  }}
+                >
                   <IconButton
                     color="inherit"
                     onClick={() => handleRemoveRule(rule.id)}
@@ -416,13 +401,13 @@ export function ProfilePage() {
         {/* Чёрный список и уведомления */}
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 3, height: "100%" }}>
+            <Paper sx={{ p: 3, height: '100%' }}>
               <Typography variant="h6" gutterBottom>
                 Чёрный список категорий
               </Typography>
               <Typography variant="body2" color="text.secondary" mb={2}>
-                То, что ты точно не хочешь покупать. Например: «кейсы в играх»,
-                «доставка еды», «бесполезные подписки».
+                То, что ты точно не хочешь покупать. Например: «кейсы в играх», «доставка еды»,
+                «бесполезные подписки».
               </Typography>
               <Box display="flex" gap={1} flexWrap="wrap">
                 <TextField
@@ -431,12 +416,12 @@ export function ProfilePage() {
                   value={blacklistInput}
                   onChange={(e) => setBlacklistInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddBlacklistItem();
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddBlacklistItem()
                     }
                   }}
-                  sx={{ flex: 1, minWidth: "150px" }}
+                  sx={{ flex: 1, minWidth: '150px' }}
                 />
                 <Button
                   type="button"
@@ -444,7 +429,7 @@ export function ProfilePage() {
                   color="primary"
                   size="small"
                   onClick={handleAddBlacklistItem}
-                  sx={{ whiteSpace: "nowrap" }}
+                  sx={{ whiteSpace: 'nowrap' }}
                 >
                   Добавить
                 </Button>
@@ -464,7 +449,7 @@ export function ProfilePage() {
                     variant="outlined"
                     sx={{
                       borderRadius: 999,
-                      borderColor: "rgba(255,255,255,0.12)",
+                      borderColor: 'rgba(255,255,255,0.12)',
                     }}
                   />
                 ))}
@@ -473,7 +458,7 @@ export function ProfilePage() {
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 3, height: "100%" }}>
+            <Paper sx={{ p: 3, height: '100%' }}>
               <Typography variant="h6" gutterBottom>
                 Уведомления
               </Typography>
@@ -485,9 +470,7 @@ export function ProfilePage() {
                   select
                   label="Канал"
                   value={notifyChannel}
-                  onChange={(e) =>
-                    setNotifyChannel(e.target.value as "none" | "email" | "app")
-                  }
+                  onChange={(e) => setNotifyChannel(e.target.value as 'none' | 'email' | 'app')}
                   fullWidth
                 >
                   <MenuItem value="none">Не напоминать</MenuItem>
@@ -500,9 +483,7 @@ export function ProfilePage() {
                   label="Частота"
                   value={notifyFrequency}
                   onChange={(e) =>
-                    setNotifyFrequency(
-                      e.target.value as "daily" | "weekly" | "monthly"
-                    )
+                    setNotifyFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')
                   }
                   fullWidth
                 >
@@ -515,16 +496,11 @@ export function ProfilePage() {
           </Grid>
         </Grid>
 
-        <Divider sx={{ borderColor: "rgba(255,255,255,0.12)" }} />
+        <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
 
         <Box display="flex" alignItems="center" gap={2}>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={isSaving}
-          >
-            {isSaving ? "Сохраняем..." : "Сохранить профиль"}
+          <Button type="submit" variant="contained" color="primary" disabled={isSaving}>
+            {isSaving ? 'Сохраняем...' : 'Сохранить профиль'}
           </Button>
           {saveMessage && (
             <Typography variant="body2" color="text.secondary">
@@ -534,5 +510,5 @@ export function ProfilePage() {
         </Box>
       </Stack>
     </Box>
-  );
+  )
 }

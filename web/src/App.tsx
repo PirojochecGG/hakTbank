@@ -1,14 +1,14 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import { theme } from "./theme";
-import { Layout } from "./components/Layout";
-import { ProfilePage } from "./pages/ProfilePage";
-import { ChatPage } from "./pages/ChatPage";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { RequireAuth } from "./components/RequireAuth";
-import { TariffsPage } from "./pages/TariffsPage";
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { ThemeProvider } from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
+import { theme } from './theme'
+import { Layout } from './components/Layout'
+import { ProfilePage } from './pages/ProfilePage'
+import { ChatPage } from './pages/ChatPage'
+import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
+import { RequireAuth } from './components/RequireAuth'
+import { TariffsPage } from './pages/TariffsPage'
 
 function App() {
   return (
@@ -47,7 +47,7 @@ function App() {
         </Routes>
       </Layout>
     </ThemeProvider>
-  );
+  )
 }
 
-export default App;
+export default App

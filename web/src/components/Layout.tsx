@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState } from 'react'
 import {
   Avatar,
   Box,
@@ -12,48 +12,47 @@ import {
   Stack,
   Typography,
   IconButton,
-} from "@mui/material";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import LogoutIcon from "@mui/icons-material/Logout";
-import MenuIcon from "@mui/icons-material/Menu";
-import CloseIcon from "@mui/icons-material/Close";
-import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+} from '@mui/material'
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
+import LogoutIcon from '@mui/icons-material/Logout'
+import MenuIcon from '@mui/icons-material/Menu'
+import CloseIcon from '@mui/icons-material/Close'
+import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
-const drawerWidth = 260;
+const drawerWidth = 260
 
 type LayoutProps = {
-  children: ReactNode;
-};
+  children: ReactNode
+}
 
 export function Layout({ children }: LayoutProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { token, user, logout } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { token, user, logout } = useAuth()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   const handleMobileMenuClose = () => {
-    setMobileMenuOpen(false);
-  };
+    setMobileMenuOpen(false)
+  }
 
-  const userInitial = user?.nickname?.[0] || user?.email?.[0] || "?";
-  const isAuthPage =
-    location.pathname === "/login" || location.pathname === "/register";
+  const userInitial = user?.nickname?.[0] || user?.email?.[0] || '?'
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register'
 
   return (
     <Box
       sx={{
-        display: "flex",
-        minHeight: "100vh",
-        bgcolor: "background.default",
-        flexDirection: { xs: "column", md: "row" },
+        display: 'flex',
+        minHeight: '100vh',
+        bgcolor: 'background.default',
+        flexDirection: { xs: 'column', md: 'row' },
       }}
     >
       {/* Основной контент */}
@@ -61,19 +60,19 @@ export function Layout({ children }: LayoutProps) {
         component="main"
         sx={{
           flex: 1,
-          minHeight: "100vh",
+          minHeight: '100vh',
           pb: { xs: isAuthPage ? 0 : 0, md: 0 },
           p: { xs: 2, md: 3 },
-          overflowY: "auto",
+          overflowY: 'auto',
         }}
       >
         {/* Мобильная кнопка меню */}
         {!isAuthPage && (
           <IconButton
             sx={{
-              display: { xs: "flex", md: "none" },
+              display: { xs: 'flex', md: 'none' },
               mb: 2,
-              color: "primary.main",
+              color: 'primary.main',
             }}
             onClick={() => setMobileMenuOpen(true)}
           >
@@ -89,22 +88,22 @@ export function Layout({ children }: LayoutProps) {
           variant="permanent"
           anchor="right"
           sx={{
-            display: { xs: "none", md: "block" },
+            display: { xs: 'none', md: 'block' },
             width: drawerWidth,
             flexShrink: 0,
-            "& .MuiDrawer-paper": {
+            '& .MuiDrawer-paper': {
               width: drawerWidth,
-              boxSizing: "border-box",
-              bgcolor: "background.paper",
-              borderLeft: "1px solid rgba(255,255,255,0.08)",
-              position: "fixed",
+              boxSizing: 'border-box',
+              bgcolor: 'background.paper',
+              borderLeft: '1px solid rgba(255,255,255,0.08)',
+              position: 'fixed',
               right: 0,
               top: 0,
               bottom: 0,
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
               p: 2,
             },
           }}
@@ -127,17 +126,17 @@ export function Layout({ children }: LayoutProps) {
           open={mobileMenuOpen}
           onClose={handleMobileMenuClose}
           sx={{
-            display: { xs: "block", md: "none" },
-            "& .MuiDrawer-paper": {
-              width: "100%",
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': {
+              width: '100%',
               maxWidth: 300,
-              boxSizing: "border-box",
-              bgcolor: "background.paper",
-              borderRight: "1px solid rgba(255,255,255,0.08)",
-              overflow: "auto",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
+              boxSizing: 'border-box',
+              bgcolor: 'background.paper',
+              borderLeft: '1px solid rgba(255,255,255,0.08)',
+              overflow: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
               p: 2,
             },
           }}
@@ -145,9 +144,9 @@ export function Layout({ children }: LayoutProps) {
           <Box>
             <IconButton
               sx={{
-                alignSelf: "flex-start",
+                alignSelf: 'flex-start',
                 mb: 1,
-                color: "primary.main",
+                color: 'primary.main',
               }}
               onClick={handleMobileMenuClose}
             >
@@ -164,25 +163,19 @@ export function Layout({ children }: LayoutProps) {
         </Drawer>
       )}
     </Box>
-  );
+  )
 }
 
 // Компонент для содержимого drawer
 interface DrawerContentProps {
-  token: string | null;
-  user: { nickname?: string; email?: string } | null;
-  userInitial: string;
-  onLogout: () => void;
-  onNavigate: () => void;
+  token: string | null
+  user: { nickname?: string; email?: string } | null
+  userInitial: string
+  onLogout: () => void
+  onNavigate: () => void
 }
 
-function DrawerContent({
-  token,
-  user,
-  userInitial,
-  onLogout,
-  onNavigate,
-}: DrawerContentProps) {
+function DrawerContent({ token, user, userInitial, onLogout, onNavigate }: DrawerContentProps) {
   return (
     <>
       <Box>
@@ -206,17 +199,17 @@ function DrawerContent({
               borderRadius: 2,
               mb: 1,
               opacity: token ? 1 : 0.6,
-              pointerEvents: token ? "auto" : "none",
-              "&.active": {
-                bgcolor: "primary.main",
-                color: "#000000",
-                "& .MuiListItemIcon-root": {
-                  color: "#000000",
+              pointerEvents: token ? 'auto' : 'none',
+              '&.active': {
+                bgcolor: 'primary.main',
+                color: '#000000',
+                '& .MuiListItemIcon-root': {
+                  color: '#000000',
                 },
               },
             }}
           >
-            <ListItemIcon sx={{ color: "text.secondary" }}>
+            <ListItemIcon sx={{ color: 'text.secondary' }}>
               <PersonOutlineIcon />
             </ListItemIcon>
             <ListItemText primary="Профиль" />
@@ -229,17 +222,17 @@ function DrawerContent({
             sx={{
               borderRadius: 2,
               opacity: token ? 1 : 0.6,
-              pointerEvents: token ? "auto" : "none",
-              "&.active": {
-                bgcolor: "primary.main",
-                color: "#000000",
-                "& .MuiListItemIcon-root": {
-                  color: "#000000",
+              pointerEvents: token ? 'auto' : 'none',
+              '&.active': {
+                bgcolor: 'primary.main',
+                color: '#000000',
+                '& .MuiListItemIcon-root': {
+                  color: '#000000',
                 },
               },
             }}
           >
-            <ListItemIcon sx={{ color: "text.secondary" }}>
+            <ListItemIcon sx={{ color: 'text.secondary' }}>
               <ChatBubbleOutlineIcon />
             </ListItemIcon>
             <ListItemText primary="Чат с моделью" />
@@ -251,17 +244,17 @@ function DrawerContent({
             sx={{
               borderRadius: 2,
               opacity: token ? 1 : 0.6,
-              pointerEvents: token ? "auto" : "none",
-              "&.active": {
-                bgcolor: "primary.main",
-                color: "#000000",
-                "& .MuiListItemIcon-root": {
-                  color: "#000000",
+              pointerEvents: token ? 'auto' : 'none',
+              '&.active': {
+                bgcolor: 'primary.main',
+                color: '#000000',
+                '& .MuiListItemIcon-root': {
+                  color: '#000000',
                 },
               },
             }}
           >
-            <ListItemIcon sx={{ color: "text.secondary" }}>
+            <ListItemIcon sx={{ color: 'text.secondary' }}>
               <PaidOutlinedIcon />
             </ListItemIcon>
             <ListItemText primary="Тарифы" />
@@ -274,12 +267,10 @@ function DrawerContent({
         {token ? (
           <Stack spacing={1.5}>
             <Stack direction="row" spacing={1.5} alignItems="center">
-              <Avatar sx={{ bgcolor: "primary.main", color: "black" }}>
-                {userInitial}
-              </Avatar>
+              <Avatar sx={{ bgcolor: 'primary.main', color: 'black' }}>{userInitial}</Avatar>
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="subtitle2" noWrap>
-                  {user?.nickname || "Пользователь"}
+                  {user?.nickname || 'Пользователь'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" noWrap>
                   {user?.email}
@@ -299,21 +290,10 @@ function DrawerContent({
           </Stack>
         ) : (
           <Stack spacing={1}>
-            <Button
-              component={NavLink}
-              to="/login"
-              variant="contained"
-              fullWidth
-            >
+            <Button component={NavLink} to="/login" variant="contained" fullWidth>
               Войти
             </Button>
-            <Button
-              component={NavLink}
-              to="/register"
-              variant="outlined"
-              color="inherit"
-              fullWidth
-            >
+            <Button component={NavLink} to="/register" variant="outlined" color="inherit" fullWidth>
               Регистрация
             </Button>
           </Stack>
@@ -324,5 +304,5 @@ function DrawerContent({
         </Typography>
       </Box>
     </>
-  );
+  )
 }

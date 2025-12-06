@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react'
 import {
   Alert,
   Box,
@@ -9,115 +9,105 @@ import {
   Paper,
   TextField,
   Typography,
-} from "@mui/material";
-import {
-  Email,
-  Lock,
-  Person,
-  Visibility,
-  VisibilityOff,
-} from "@mui/icons-material";
-import { useAuth } from "../../context/AuthContext";
-import TButton from "../Common/TButton";
+} from '@mui/material'
+import { Email, Lock, Person, Visibility, VisibilityOff } from '@mui/icons-material'
+import { useAuth } from '../../context/AuthContext'
+import TButton from '../Common/TButton'
 
 type RegisterData = {
-  email: string;
-  password: string;
-  nickname: string;
-};
-
-interface RegisterFormProps {
-  onSuccess: () => void;
-  onSwitchToLogin: () => void;
+  email: string
+  password: string
+  nickname: string
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({
-  onSuccess,
-  onSwitchToLogin,
-}) => {
-  const { register } = useAuth();
+interface RegisterFormProps {
+  onSuccess: () => void
+  onSwitchToLogin: () => void
+}
+
+const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin }) => {
+  const { register } = useAuth()
   const [formData, setFormData] = useState<RegisterData>({
-    email: "",
-    password: "",
-    nickname: "",
-  });
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
+    email: '',
+    password: '',
+    nickname: '',
+  })
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState('')
 
   const validateForm = (): boolean => {
     if (!formData.email || !formData.password || !formData.nickname) {
-      setError("Все поля обязательны для заполнения");
-      return false;
+      setError('Все поля обязательны для заполнения')
+      return false
     }
 
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      setError("Введите корректный email");
-      return false;
+      setError('Введите корректный email')
+      return false
     }
 
     if (formData.password.length < 3) {
-      setError("Пароль должен содержать минимум 3 символа");
-      return false;
+      setError('Пароль должен содержать минимум 3 символа')
+      return false
     }
 
     if (formData.password !== confirmPassword) {
-      setError("Пароли не совпадают");
-      return false;
+      setError('Пароли не совпадают')
+      return false
     }
 
     if (formData.nickname.length < 2) {
-      setError("Никнейм должен содержать минимум 2 символа");
-      return false;
+      setError('Никнейм должен содержать минимум 2 символа')
+      return false
     }
 
-    return true;
-  };
+    return true
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!validateForm()) {
-      return;
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
     try {
-      await register(formData);
-      setSuccess("Аккаунт успешно создан!");
-      setError("");
-      onSuccess();
+      await register(formData)
+      setSuccess('Аккаунт успешно создан!')
+      setError('')
+      onSuccess()
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Ошибка регистрации";
-      setError(message);
+      const message = err instanceof Error ? err.message : 'Ошибка регистрации'
+      setError(message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const handleChange =
-    (field: keyof RegisterData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData({ ...formData, [field]: e.target.value });
-    };
+  const handleChange = (field: keyof RegisterData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [field]: e.target.value })
+  }
 
   return (
     <Paper
       sx={{
         p: 4,
-        backgroundColor: "#1A1A1A",
+        backgroundColor: '#1A1A1A',
         maxWidth: 400,
-        width: "100%",
-        mx: "auto",
+        width: '100%',
+        mx: 'auto',
       }}
     >
-      <Box sx={{ textAlign: "center", mb: 3 }}>
-        <Typography variant="h4" sx={{ color: "#FFD600", fontWeight: 700 }}>
+      <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <Typography variant="h4" sx={{ color: '#FFD600', fontWeight: 700 }}>
           Адвокат Залупкич
         </Typography>
-        <Typography variant="h6" sx={{ mt: 1, color: "#FFFFFF" }}>
+        <Typography variant="h6" sx={{ mt: 1, color: '#FFFFFF' }}>
           Регистрация
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -143,13 +133,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           label="Email"
           type="email"
           value={formData.email}
-          onChange={handleChange("email")}
+          onChange={handleChange('email')}
           margin="normal"
           required
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Email sx={{ color: "#FFD600" }} />
+                <Email sx={{ color: '#FFD600' }} />
               </InputAdornment>
             ),
           }}
@@ -159,14 +149,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           fullWidth
           label="Никнейм"
           value={formData.nickname}
-          onChange={handleChange("nickname")}
+          onChange={handleChange('nickname')}
           margin="normal"
           required
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                {" "}
-                <Person sx={{ color: "#FFD600" }} />
+                {' '}
+                <Person sx={{ color: '#FFD600' }} />
               </InputAdornment>
             ),
           }}
@@ -175,16 +165,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         <TextField
           fullWidth
           label="Пароль"
-          type={showPassword ? "text" : "password"}
+          type={showPassword ? 'text' : 'password'}
           value={formData.password}
-          onChange={handleChange("password")}
+          onChange={handleChange('password')}
           margin="normal"
           required
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                {" "}
-                <Lock sx={{ color: "#FFD600" }} />
+                {' '}
+                <Lock sx={{ color: '#FFD600' }} />
               </InputAdornment>
             ),
             endAdornment: (
@@ -192,7 +182,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 <IconButton
                   onClick={() => setShowPassword(!showPassword)}
                   edge="end"
-                  sx={{ color: "#FFD600" }}
+                  sx={{ color: '#FFD600' }}
                 >
                   {showPassword ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
@@ -204,7 +194,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         <TextField
           fullWidth
           label="Подтверждение пароля"
-          type={showConfirmPassword ? "text" : "password"}
+          type={showConfirmPassword ? 'text' : 'password'}
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           margin="normal"
@@ -212,7 +202,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Lock sx={{ color: "#FFD600" }} />
+                <Lock sx={{ color: '#FFD600' }} />
               </InputAdornment>
             ),
             endAdornment: (
@@ -220,7 +210,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 <IconButton
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   edge="end"
-                  sx={{ color: "#FFD600" }}
+                  sx={{ color: '#FFD600' }}
                 >
                   {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
@@ -228,21 +218,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             ),
           }}
         />
-        <TButton
-          type="submit"
-          fullWidth
-          disabled={loading}
-          sx={{ mt: 3, py: 1.5 }}
-        >
-          {loading ? "Создание..." : "Зарегистрироваться"}
+        <TButton type="submit" fullWidth disabled={loading} sx={{ mt: 3, py: 1.5 }}>
+          {loading ? 'Создание...' : 'Зарегистрироваться'}
         </TButton>
       </form>
-      <Divider sx={{ my: 3, borderColor: "#333333" }}>
+      <Divider sx={{ my: 3, borderColor: '#333333' }}>
         <Typography variant="body2" color="text.secondary">
           или
         </Typography>
       </Divider>
-      <Box sx={{ textAlign: "center" }}>
+      <Box sx={{ textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary">
           Уже есть аккаунт?
         </Typography>
@@ -250,19 +235,19 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           onClick={onSwitchToLogin}
           sx={{
             mt: 1,
-            color: "#FFD600",
+            color: '#FFD600',
             fontWeight: 600,
-            "&:hover": {
-              backgroundColor: "rgba(255, 214, 0, 0.1)",
+            '&:hover': {
+              backgroundColor: 'rgba(255, 214, 0, 0.1)',
             },
           }}
         >
-          {" "}
+          {' '}
           Войти
         </Button>
       </Box>
     </Paper>
-  );
-};
+  )
+}
 
-export default RegisterForm;
+export default RegisterForm

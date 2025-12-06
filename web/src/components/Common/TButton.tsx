@@ -1,8 +1,8 @@
-import React from 'react';
-import { Button, type ButtonProps } from '@mui/material';
+import React from 'react'
+import { Button, type ButtonProps } from '@mui/material'
 
 interface TButtonProps extends ButtonProps {
-  children: React.ReactNode;
+  children: React.ReactNode
 }
 
 const TButton: React.FC<TButtonProps> = ({ children, ...props }) => {
@@ -30,7 +30,7 @@ const TButton: React.FC<TButtonProps> = ({ children, ...props }) => {
     >
       {children}
     </Button>
-  );
-};
+  )
+}
 
-export default TButton;
+export default TButton
