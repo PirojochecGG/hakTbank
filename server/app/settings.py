@@ -1,7 +1,6 @@
 # fmt: off
 # isort: off
-from os import environ
-
+from typing import Optional
 from pydantic_settings import BaseSettings
 from pydantic_settings import SettingsConfigDict
 
@@ -24,7 +23,7 @@ class Settings(BaseSettings):
 
     REDIS_URL: str = "redis://localhost:6379"
 
-    JWT_SECRET: str = "your-secret-key-change-in-production"
+    JWT_SECRET: str = "123"
 
     YOOKASSA_SECRET_KEY: str
     YOOKASSA_SHOP_ID: str
@@ -37,9 +36,9 @@ class Settings(BaseSettings):
 
     LOG_SERVICE_NAME: str = "hack-t-bank"
     LOG_LEVEL: str = "INFO"
-    LOKI_PASSWORD: str
-    LOKI_LOGIN: str
-    LOKI_URL: str
+    LOKI_PASSWORD: Optional[str] = None
+    LOKI_LOGIN: Optional[str] = None
+    LOKI_URL: Optional[str] = None
 
 
 SETTINGS = Settings()
