@@ -1,5 +1,4 @@
 # fmt: off
-from uuid import UUID
 from fastapi.responses import StreamingResponse
 from fastapi import APIRouter, HTTPException, status
 
@@ -36,11 +35,3 @@ async def chat_completion(
     return await LLMRouterManager.chat_completion(
         request_data, user, db
     )
-
-
-@router.post("/{message_id}/feedback", response_model=FeedbackResponse)
-async def create_or_update_feedback(
-    message_id: UUID, request: FeedbackRequest, user: CurrentUser, db: DBSession
-) -> FeedbackResponse:
-    """Создать или обновить фидбек для сообщения."""
-    return await LLMRouterManager.create_or_update_feedback(message_id, request, user, db)

@@ -2,12 +2,10 @@
 import json
 import asyncio
 
-from uuid import UUID
-from sqlalchemy import select
 from typing import AsyncGenerator
 from fastapi import HTTPException, status
 
-from app.storage import MessageFeedback, Message, RequestPriority
+from app.storage import RequestPriority
 from app.api.deps import CurrentUser, DBSession
 from app.services import get_service
 from app.settings import SETTINGS
@@ -64,33 +62,3 @@ class LLMRouterManager:
                     return
             except Exception:
                 pass
-
-
-    @staticmethod
-    async def create_or_update_feedback(
-        message_id: UUID, request: FeedbackRequest, user: CurrentUser, db: DBSession
-    ) -> FeedbackResponse:
-        if not await db.get(Message, message_id):
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "Сообщение не найдено")
-
-        stmt = select(MessageFeedback).where(
-            MessageFeedback.message_id == message_id,
-            MessageFeedback.user_id == user.id
-        )
-        if (feedback := (await db.execute(stmt)).scalar_one_or_none()):
-            feedback.type = request.type
-            feedback.comment = request.comment
-        else:
-            feedback = MessageFeedback(
-                message_id=message_id, user_id=user.id,
-                type=request.type, comment=request.comment
-            )
-            db.add(feedback)
-
-        await db.commit()
-        await db.refresh(feedback)
-        return FeedbackResponse(
-            id=feedback.id, message_id=feedback.message_id,
-            type=feedback.type, comment=feedback.comment,
-            created_at=feedback.created_at.isoformat()
-        )
