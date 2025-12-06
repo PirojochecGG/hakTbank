@@ -1,10 +1,14 @@
-import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import {
   Box,
   Button,
   CircularProgress,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   IconButton,
   List,
   ListItemButton,
@@ -14,20 +18,11 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import EditIcon from '@mui/icons-material/Edit'
 
 import { apiFetch, getAccessToken } from '../api/api'
 import { clearStoredChatId, getStoredChatId, setStoredChatId } from '../utils/chatStorage'
-
-// Функция для парсинга markdown формата **text** в JSX
-const parseMarkdownBold = (text: string) => {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g)
-  return parts.map((part, index) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>
-    }
-    return <span key={index}>{part}</span>
-  })
-}
+import { MarkdownRenderer } from '../components/MarkdownRenderer'
 
 // Функция для парсинга SSE (Server-Sent Events) формата
 const parseSSEMessage = (line: string): string => {
@@ -112,6 +107,7 @@ type ChatMessage = {
 type ChatListItem = {
   id?: string
   chat_id?: string
+  title?: string
   updated_at?: string
 }
 
@@ -128,6 +124,7 @@ type ChatListResponse = {
 type NormalizedChatListItem = {
   id: string
   chat_id: string
+  title: string
   updated_at?: string
 }
 
@@ -153,6 +150,7 @@ const normalizeChatList = (apiChats?: ChatListItem[]): NormalizedChatListItem[] 
   return apiChats.map((chat, index) => ({
     id: chat.id ?? chat.chat_id ?? `${index}`,
     chat_id: chat.chat_id ?? chat.id ?? `${index}`,
+    title: chat.title ?? `Чат ${(chat.chat_id ?? chat.id ?? `${index}`).toString().slice(0, 8)}`,
     updated_at: chat.updated_at,
   }))
 }
@@ -168,6 +166,10 @@ export function ChatPage() {
   const [chatList, setChatList] = useState<NormalizedChatListItem[]>([])
   const [chatPage, setChatPage] = useState(1)
   const [hasMoreChats, setHasMoreChats] = useState(false)
+
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false)
+  const [renameDialogChatId, setRenameDialogChatId] = useState<string | null>(null)
+  const [renameDialogTitle, setRenameDialogTitle] = useState('')
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -211,7 +213,7 @@ export function ChatPage() {
       const defaultQuery = new URLSearchParams({
         page: String(page),
         size: String(PAGE_SIZE),
-        sort: 'updated_at,desc',
+        sort: 'new',
       })
 
       return await fetchWithQuery(defaultQuery)
@@ -605,14 +607,51 @@ export function ChatPage() {
     }
   }
 
-  const chatListTitle = useMemo(
-    () =>
-      chatList.map((chat) => ({
-        ...chat,
-        title: `Чат ${chat.chat_id.slice(0, 8)}`,
-      })),
-    [chatList],
-  )
+  const handleOpenRenameDialog = (chatIdToRename: string, currentTitle: string) => {
+    setRenameDialogChatId(chatIdToRename)
+    setRenameDialogTitle(currentTitle)
+    setRenameDialogOpen(true)
+  }
+
+  const handleCloseRenameDialog = () => {
+    setRenameDialogOpen(false)
+    setRenameDialogChatId(null)
+    setRenameDialogTitle('')
+  }
+
+  const handleConfirmRename = async () => {
+    if (!renameDialogChatId || !renameDialogTitle.trim() || isLoading || isSending) return
+
+    setIsLoading(true)
+    try {
+      await apiFetch(`/v1/chats/${renameDialogChatId}`, {
+        method: 'POST',
+        body: JSON.stringify({ title: renameDialogTitle.trim() }),
+      })
+      await fetchChatList(chatPage)
+      handleCloseRenameDialog()
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Не удалось переименовать чат.'
+      const errorCode = (error as { code?: string }).code
+
+      const feedbackMessage = errorCode
+        ? `${errorMessage} (код ошибки: ${errorCode})`
+        : errorMessage
+
+      setMessages([
+        {
+          id: 'rename-error',
+          role: 'assistant',
+          text: `${feedbackMessage}. Попробуй еще раз или спроси у тиммейта по бэкенду, жив ли API.`,
+        },
+      ])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // chatList уже содержит title из normalizeChatList, используем его напрямую
+  const chatListTitle = chatList
 
   return (
     <Box
@@ -640,7 +679,7 @@ export function ChatPage() {
         <Paper
           sx={{
             p: 2,
-            width: { xs: '100%', md: 300 },
+            width: { xs: '100%', md: 380 },
             flexShrink: 0,
             display: 'flex',
             flexDirection: 'column',
@@ -693,18 +732,28 @@ export function ChatPage() {
             ) : (
               <List dense>
                 {chatListTitle.map((chat) => (
-                  <ListItemButton
-                    key={chat.id}
-                    selected={chat.chat_id === chatId}
-                    onClick={() => void handleSelectChat(chat.chat_id)}
-                  >
-                    <ListItemText
-                      primary={chat.title}
-                      secondary={
-                        chat.updated_at ? new Date(chat.updated_at).toLocaleString() : undefined
-                      }
-                    />
-                  </ListItemButton>
+                  <Box key={chat.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <ListItemButton
+                      selected={chat.chat_id === chatId}
+                      onClick={() => void handleSelectChat(chat.chat_id)}
+                      sx={{ flex: 1 }}
+                    >
+                      <ListItemText
+                        primary={chat.title}
+                        secondary={
+                          chat.updated_at ? new Date(chat.updated_at).toLocaleString() : undefined
+                        }
+                      />
+                    </ListItemButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => void handleOpenRenameDialog(chat.chat_id, chat.title)}
+                      disabled={isLoading || isSending}
+                      sx={{ mr: 1 }}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
                 ))}
                 {!chatListTitle.length && (
                   <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
@@ -784,9 +833,13 @@ export function ChatPage() {
                   >
                     {msg.role === 'user' ? '' : 'Ассистент'}
                   </Typography>
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                    {parseMarkdownBold(msg.text)}
-                  </Typography>
+                  {msg.role === 'user' ? (
+                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                      {msg.text}
+                    </Typography>
+                  ) : (
+                    <MarkdownRenderer content={msg.text} />
+                  )}
                 </Box>
               </Box>
             ))}
@@ -821,6 +874,35 @@ export function ChatPage() {
           </Box>
         </Paper>
       </Stack>
+
+      <Dialog open={renameDialogOpen} onClose={handleCloseRenameDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Переименовать чат</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <TextField
+            fullWidth
+            label="Новое название"
+            value={renameDialogTitle}
+            onChange={(e) => setRenameDialogTitle(e.target.value)}
+            placeholder="Введите новое название чата..."
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                void handleConfirmRename()
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseRenameDialog}>Отмена</Button>
+          <Button
+            onClick={() => void handleConfirmRename()}
+            variant="contained"
+            disabled={!renameDialogTitle.trim() || isLoading}
+          >
+            Сохранить
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
