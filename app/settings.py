@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     NEBIUS_API_KEY: str
     OPENAI_API_KEY: str
     OPENAI_API_URL: str
+    MAX_TIMEOUT: int = 300
 
     LOG_SERVICE_NAME: str = "hack-t-bank"
     LOG_LEVEL: str = "INFO"

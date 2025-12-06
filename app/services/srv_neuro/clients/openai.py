@@ -7,7 +7,7 @@ from .base import BaseClient
 
 
 class OpenaiClient(BaseClient):
-    """Клиент для UnifiedLLM API."""
+    """Клиент для OpenaiLLM API."""
 
     def __init__(self):
         """Инициализация клиента."""

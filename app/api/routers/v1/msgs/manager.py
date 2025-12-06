@@ -22,10 +22,7 @@ class LLMRouterManager:
             "text": request_data.text,
             "type": "text_completion",
             "model": request_data.model,
-            "agent_id": request_data.agent_id,
-            "chat_id": str(request_data.chat_id) if request_data.chat_id else None,
-            **({"attachments": [att.model_dump() for att in request_data.attachments]}
-               if request_data.attachments else {})
+            "chat_id": str(request_data.chat_id) if request_data.chat_id else None
         }
 
 
