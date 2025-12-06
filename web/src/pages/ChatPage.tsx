@@ -24,6 +24,21 @@ import { apiFetch, getAccessToken } from '../api/api'
 import { clearStoredChatId, getStoredChatId, setStoredChatId } from '../utils/chatStorage'
 import { MarkdownRenderer } from '../components/MarkdownRenderer'
 
+// Полифилл для crypto.randomUUID() с fallback
+const generateUUID = (): string => {
+  // Проверяем наличие crypto.randomUUID
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+
+  // Fallback: генерируем UUID v4 вручную
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
 // Функция для парсинга SSE (Server-Sent Events) формата
 const parseSSEMessage = (line: string): string => {
   // Формат: "data: {...}" или просто "data: text"
@@ -440,12 +455,12 @@ export function ChatPage() {
     if (!trimmed || isSending || !chatId) return
 
     const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       role: 'user',
       text: trimmed,
     }
 
-    const assistantMessageId = crypto.randomUUID()
+    const assistantMessageId = generateUUID()
     const assistantMessage: ChatMessage = {
       id: assistantMessageId,
       role: 'assistant',
