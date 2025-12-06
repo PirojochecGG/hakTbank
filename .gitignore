@@ -2,10 +2,10 @@ logs
 .vscode
 test.env
 prod.env
-
+endpoints.json
 test.env
 prod.env
-
+node_modules
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
