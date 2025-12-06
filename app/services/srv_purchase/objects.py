@@ -1,13 +1,15 @@
+# fmt: off
 from uuid import UUID
+from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
-from typing import Optional
 
 from app.storage.enums import PurchaseStatus
 
 
 class PurchaseInfo(BaseModel):
     """Информация о покупке."""
+
     id: UUID
     user_id: UUID
     chat_id: UUID
@@ -25,6 +27,7 @@ class PurchaseInfo(BaseModel):
 
 class CreatePurchaseRequest(BaseModel):
     """Запрос на создание покупки."""
+
     name: str
     price: int
     category: str
@@ -34,6 +37,7 @@ class CreatePurchaseRequest(BaseModel):
 
 class CoolingAnalysis(BaseModel):
     """Результат анализа охлаждения."""
+
     is_blacklisted: bool
     cooling_days: int
     savings_days: int
