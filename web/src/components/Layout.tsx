@@ -18,6 +18,7 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
+import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -43,7 +44,8 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const userInitial = user?.nickname?.[0] || user?.email?.[0] || "?";
-  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
+  const isAuthPage =
+    location.pathname === "/login" || location.pathname === "/register";
 
   return (
     <Box
@@ -186,7 +188,7 @@ function DrawerContent({
       <Box>
         <Box sx={{ mb: 2 }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            T-Bank
+            Адвокат Залупкич
           </Typography>
           <Typography variant="caption" color="text.secondary">
             Рациональный ассистент
@@ -242,6 +244,28 @@ function DrawerContent({
             </ListItemIcon>
             <ListItemText primary="Чат с моделью" />
           </ListItemButton>
+          <ListItemButton
+            component={NavLink}
+            to="/tariffs"
+            onClick={onNavigate}
+            sx={{
+              borderRadius: 2,
+              opacity: token ? 1 : 0.6,
+              pointerEvents: token ? "auto" : "none",
+              "&.active": {
+                bgcolor: "primary.main",
+                color: "#000000",
+                "& .MuiListItemIcon-root": {
+                  color: "#000000",
+                },
+              },
+            }}
+          >
+            <ListItemIcon sx={{ color: "text.secondary" }}>
+              <PaidOutlinedIcon />
+            </ListItemIcon>
+            <ListItemText primary="Тарифы" />
+          </ListItemButton>
         </List>
       </Box>
 
@@ -275,7 +299,12 @@ function DrawerContent({
           </Stack>
         ) : (
           <Stack spacing={1}>
-            <Button component={NavLink} to="/login" variant="contained" fullWidth>
+            <Button
+              component={NavLink}
+              to="/login"
+              variant="contained"
+              fullWidth
+            >
               Войти
             </Button>
             <Button
@@ -291,7 +320,7 @@ function DrawerContent({
         )}
         <Divider sx={{ mt: 2, mb: 1 }} />
         <Typography variant="caption" color="text.secondary">
-          Сделано для хакатона T-Bank.
+          Сделано для хакатона Адвокат Залупкич.
         </Typography>
       </Box>
     </>

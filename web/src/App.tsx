@@ -8,6 +8,7 @@ import { ChatPage } from "./pages/ChatPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { RequireAuth } from "./components/RequireAuth";
+import { TariffsPage } from "./pages/TariffsPage";
 
 function App() {
   return (
@@ -31,6 +32,14 @@ function App() {
             element={
               <RequireAuth>
                 <ChatPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/tariffs"
+            element={
+              <RequireAuth>
+                <TariffsPage />
               </RequireAuth>
             }
           />
