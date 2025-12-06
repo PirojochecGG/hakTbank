@@ -1,31 +1,19 @@
 FROM python:3.12-slim
 
-# Установка необходимых зависимостей
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    postgresql-client \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Установка uv
+# Установка uv и Redis
+RUN apt-get update && apt-get install -y redis-server && rm -rf /var/lib/apt/lists/*
 RUN pip install uv
 
 WORKDIR /src
 
-# Копируем файлы конфигурации
-COPY pyproject.toml pyproject.toml ./
+# Копируем файлы конфигурации uv
+COPY pyproject.toml ./
 
 # Устанавливаем зависимости через uv
-RUN uv sync --no-dev
+RUN uv sync
 
-# Копируем весь проект
 COPY . /src
 
 EXPOSE 8080
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
-
-# Запуск миграций и приложения
-CMD ["sh", "-c", "uv run alembic upgrade head && uv run python -m app"]
+CMD ["sh", "-c", "redis-server --daemonize yes --maxmemory 1gb --maxmemory-policy allkeys-lru --save '' && sleep 2 && uv run alembic upgrade head && uv run python -m app"]
