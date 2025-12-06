@@ -181,7 +181,7 @@ function DrawerContent({ token, user, userInitial, onLogout, onNavigate }: Drawe
       <Box>
         <Box sx={{ mb: 2 }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            Адвокат Залупкич
+            Охладитель
           </Typography>
           <Typography variant="caption" color="text.secondary">
             Рациональный ассистент
@@ -300,7 +300,7 @@ function DrawerContent({ token, user, userInitial, onLogout, onNavigate }: Drawe
         )}
         <Divider sx={{ mt: 2, mb: 1 }} />
         <Typography variant="caption" color="text.secondary">
-          Сделано для хакатона Адвокат Залупкич.
+          Сделано для хакатона Охладитель.
         </Typography>
       </Box>
     </>

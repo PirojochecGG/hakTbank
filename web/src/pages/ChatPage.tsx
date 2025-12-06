@@ -112,8 +112,8 @@ export function ChatPage() {
     try {
       const query = new URLSearchParams({
         page: String(page),
-        limit: String(PAGE_SIZE),
-        order: 'desc',
+        size: String(PAGE_SIZE),
+        sort: 'updated_at,desc',
       })
 
       const response = await apiFetch<ChatListResponse | ChatListItem[]>(
